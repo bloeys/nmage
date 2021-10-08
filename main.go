@@ -2,19 +2,21 @@ package main
 
 import (
 	"fmt"
-	"time"
 
+	"github.com/bloeys/go-sdl-engine/timing"
+	"github.com/go-gl/gl/v4.6-compatibility/gl"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
 const (
-	winWidth  int32 = 800
-	winHeight int32 = 600
+	winWidth  int32 = 1280
+	winHeight int32 = 720
 )
 
 var (
 	isRunning = true
 	window    *sdl.Window
+	glContext sdl.GLContext
 )
 
 func main() {
@@ -25,69 +27,90 @@ func main() {
 	}
 	defer sdl.Quit()
 
+	//Size of each pixel field
+	err = sdl.GLSetAttribute(sdl.GL_RED_SIZE, 8)
+	panicIfErr(err, "")
+
+	err = sdl.GLSetAttribute(sdl.GL_GREEN_SIZE, 8)
+	panicIfErr(err, "")
+
+	err = sdl.GLSetAttribute(sdl.GL_BLUE_SIZE, 8)
+	panicIfErr(err, "")
+
+	err = sdl.GLSetAttribute(sdl.GL_ALPHA_SIZE, 8)
+	panicIfErr(err, "")
+
+	//Min frame buffer size
+	err = sdl.GLSetAttribute(sdl.GL_BUFFER_SIZE, 4*8)
+	panicIfErr(err, "")
+
+	//Whether to enable a double buffer
+	err = sdl.GLSetAttribute(sdl.GL_DOUBLEBUFFER, 1)
+	panicIfErr(err, "")
+
+	//Run in compatiability (old and modern opengl) or modern (core) opengl only
+	// sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_CORE)
+	err = sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_COMPATIBILITY)
+	panicIfErr(err, "")
+
+	//Set wanted opengl version
+	err = sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 4)
+	panicIfErr(err, "")
+
+	err = sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 6)
+	panicIfErr(err, "")
+
+	//Create window
 	window, err = sdl.CreateWindow(
-		"test",
+		"Go Game Engine",
 		sdl.WINDOWPOS_CENTERED,
 		sdl.WINDOWPOS_CENTERED,
 		winWidth,
 		winHeight,
-		sdl.WINDOW_SHOWN)
+		sdl.WINDOW_OPENGL)
 	if err != nil {
 		panic("Failed to create window. Err: " + err.Error())
 	}
 	defer window.Destroy()
 
-	rend, err := sdl.CreateRenderer(window, -1, sdl.RENDERER_ACCELERATED)
+	//Create GL context
+	glContext, err = window.GLCreateContext()
 	if err != nil {
-		panic("Creating renderer failed. Err: " + err.Error())
+		panic("Creating OpenGL context failed. Err: " + err.Error())
 	}
-	defer rend.Destroy()
+	defer sdl.GLDeleteContext(glContext)
 
-	tex, err := rend.CreateTexture(sdl.PIXELFORMAT_ABGR8888, 0, winWidth, winHeight)
-	if err != nil {
-		panic(err)
-	}
-
-	//x4 to allow for RGBA
-	pixels := make([]byte, winHeight*winWidth*4)
-	for y := 0; y < int(winHeight); y++ {
-		for x := 0; x < int(winWidth); x++ {
-
-			c := sdl.Color{
-				R: byte(int(float64(x)/float64(winWidth)*256) % 256),
-				G: byte(int(float64(y)/float64(winHeight)*256) % 256),
-			}
-
-			setPixel(x, y, c, pixels)
-		}
+	if err := gl.Init(); err != nil {
+		panic("Initing OpenGL Context failed. Err: " + err.Error())
 	}
 
-	//Update texture with new pixel values
-	tex.Update(nil, pixels, int(winWidth)*4)
-	//Copy texture to renderer
-	rend.Copy(tex, nil, nil)
-	//Blit
-	rend.Present()
+	initGL()
+	gameLoop()
+}
 
-	var fps float32 = 60
-	var dt float32 = 1.0 / 60.0
-	var dtLimit float32 = 1.0 / 120.0
+func initGL() {
+
+	gl.ClearColor(0, 0, 0, 0)
+
+	gl.Enable(gl.DEPTH_TEST)
+	gl.ClearDepth(1)
+	gl.DepthFunc(gl.LEQUAL)
+	gl.Viewport(0, 0, winWidth, winHeight)
+}
+
+func gameLoop() {
+
 	for isRunning {
 
-		frameStartTime := time.Now()
+		timing.FrameStarted()
 
 		handleEvents()
+		draw()
 
-		//If FPS is more than 120 then limit to that
-		dt = float32(time.Since(frameStartTime).Seconds())
-		if dt < dtLimit {
-			sdl.Delay(8 - uint32(dt*1000))
-			dt = float32(time.Since(frameStartTime).Seconds())
-		}
+		window.GLSwap()
 
-		//Display FPS is the average of the FPS of this frame and the last frame
-		fps = (fps + 1/dt) / 2
-		window.SetTitle(fmt.Sprintf("FPS: %.2f; dt: %.3f", fps, dt))
+		timing.FrameEnded()
+		window.SetTitle(fmt.Sprintf("FPS: %.2f; dt: %.3f", timing.FPS(), timing.DT()))
 	}
 }
 
@@ -104,12 +127,28 @@ func handleEvents() {
 	}
 }
 
-//handleEvents assumes sdl.PIXELFORMAT_ABGR8888
-func setPixel(x, y int, c sdl.Color, pixels []byte) {
+func draw() {
+	//Clear screen and depth buffers
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-	index := (y*int(winWidth) + x) * 4
-	pixels[index] = c.R
-	pixels[index+1] = c.G
-	pixels[index+2] = c.B
-	pixels[index+3] = c.A
+	gl.Begin(gl.TRIANGLES)
+
+	gl.Color3f(1, 0, 0)
+	gl.Vertex3f(0, 0.5, 0)
+
+	gl.Color3f(1, 0, 0)
+	gl.Vertex3f(0.5, 0, 0)
+
+	gl.Color3f(1, 0, 0)
+	gl.Vertex3f(-0.5, 0, 0)
+	gl.End()
+}
+
+func panicIfErr(err error, msg string) {
+
+	if err == nil {
+		return
+	}
+
+	panic(msg + "; Err: " + err.Error())
 }
