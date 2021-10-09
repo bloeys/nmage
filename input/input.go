@@ -2,8 +2,6 @@ package input
 
 import "github.com/veandco/go-sdl2/sdl"
 
-type InputKey int
-
 var (
 	anyKeyDown      bool
 	anyMouseBtnDown bool
