@@ -10,28 +10,29 @@ import (
 )
 
 type Shader struct {
+	Name string
 	ID   uint32
 	Type ShaderType
 }
 
 //NewShaderFromFile reads a shader from file, creates a new opengl shader and compiles it
-func NewShaderFromFile(shaderFilePath string, st ShaderType) (Shader, error) {
+func NewShaderFromFile(name, shaderFilePath string, st ShaderType) (Shader, error) {
 
 	b, err := os.ReadFile(shaderFilePath)
 	if err != nil {
 		return Shader{}, err
 	}
 
-	return NewShaderFromString(string(b), st)
+	return NewShaderFromString(name, string(b), st)
 }
 
 //NewShaderFromString creates a new opengl shader and compiles it
-func NewShaderFromString(sourceString string, st ShaderType) (Shader, error) {
+func NewShaderFromString(name, sourceString string, st ShaderType) (Shader, error) {
 
 	glString, freeFunc := gl.Strs(sourceString + "\x00")
 	defer freeFunc()
 
-	newShader := Shader{Type: st}
+	newShader := Shader{Name: name, Type: st}
 	if newShader.ID = gl.CreateShader(st.GLType()); newShader.ID == 0 {
 		logging.ErrLog.Panicln("Creating shader failed. ShaderType:", st)
 	}

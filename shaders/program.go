@@ -51,10 +51,21 @@ func (p *Program) DetachShader(s Shader) {
 	}
 }
 
+//Link deletes all shaders from opengl and clears the shaders array if linking is successful.
+//Note: This is allowed because only the final program is needed after linking
 func (p *Program) Link() error {
 
 	gl.LinkProgram(p.ID)
-	return getProgramLinkError(*p)
+	if err := getProgramLinkError(*p); err != nil {
+		return err
+	}
+
+	for _, v := range p.Shaders {
+		gl.DeleteShader(v.ID)
+	}
+
+	p.Shaders = nil
+	return nil
 }
 
 func getProgramLinkError(p Program) error {
@@ -89,7 +100,7 @@ func (p *Program) GetUniformLocation(name string) int32 {
 func (p *Program) SetUniformF32(name string, floats ...float32) bool {
 
 	loc := p.GetUniformLocation(name)
-	if loc == 0 {
+	if loc == -1 {
 		logging.WarnLog.Printf(
 			"Uniform with name '%s' was not found. "+
 				"This is either because it doesn't exist or isn't used in the shader",
@@ -120,7 +131,7 @@ func (p *Program) SetUniformF32(name string, floats ...float32) bool {
 func (p *Program) SetUniformI32(name string, ints ...int32) bool {
 
 	loc := p.GetUniformLocation(name)
-	if loc == 0 {
+	if loc == -1 {
 		logging.WarnLog.Printf(
 			"Uniform with name '%s' was not found. "+
 				"This is either because it doesn't exist or isn't used in the shader",

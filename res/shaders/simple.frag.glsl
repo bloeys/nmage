@@ -1,9 +1,9 @@
-#version 400
+#version 460 core
 
-uniform float r;
+uniform vec3 c;
 
-out vec4 color;
+out vec4 fragColor;
 
 void main() {
-    color = vec4(r,r,r,0);
+    fragColor = vec4(c, 1);
 }
