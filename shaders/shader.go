@@ -2,10 +2,10 @@ package shaders
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
+	"github.com/bloeys/go-sdl-engine/logging"
 	"github.com/go-gl/gl/v4.6-core/gl"
 )
 
@@ -33,7 +33,7 @@ func NewShaderFromString(sourceString string, st ShaderType) (Shader, error) {
 
 	newShader := Shader{Type: st}
 	if newShader.ID = gl.CreateShader(st.GLType()); newShader.ID == 0 {
-		log.Fatalln("Creating shader failed. ShaderType:", st)
+		logging.ErrLog.Panicln("Creating shader failed. ShaderType:", st)
 	}
 
 	gl.ShaderSource(newShader.ID, 1, glString, nil)

@@ -1,8 +1,7 @@
 package shaders
 
 import (
-	"log"
-
+	"github.com/bloeys/go-sdl-engine/logging"
 	"github.com/go-gl/gl/v4.6-core/gl"
 )
 
@@ -25,7 +24,7 @@ func (t ShaderType) GLType() uint32 {
 		return gl.FRAGMENT_SHADER
 	}
 
-	log.Panicf("Converting ShaderType->GL Shader Type failed. Unknown ShaderType of value: %v\n", t)
+	logging.ErrLog.Panicf("Converting ShaderType->GL Shader Type failed. Unknown ShaderType of value: %v\n", t)
 	return 0
 }
 
@@ -39,7 +38,7 @@ func (t ShaderType) FromGLShaderType(glShaderType int) ShaderType {
 	case gl.FRAGMENT_SHADER:
 		return Fragment
 	default:
-		log.Printf("Converting GL shader type->ShaderType failed. Unknown GL shader type of value: %v\n", glShaderType)
+		logging.ErrLog.Panicf("Converting GL shader type->ShaderType failed. Unknown GL shader type of value: %v\n", glShaderType)
 		return Unknown
 	}
 }

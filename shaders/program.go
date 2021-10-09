@@ -2,9 +2,9 @@ package shaders
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
+	"github.com/bloeys/go-sdl-engine/logging"
 	"github.com/go-gl/gl/v4.6-core/gl"
 )
 
@@ -20,7 +20,7 @@ func NewProgram(name string) Program {
 	p.Shaders = make([]Shader, 0)
 
 	if p.ID = gl.CreateProgram(); p.ID == 0 {
-		log.Fatalln("Creating OpenGL program failed")
+		logging.ErrLog.Fatalln("Creating OpenGL program failed")
 	}
 
 	return p
@@ -77,6 +77,72 @@ func getProgramLinkError(p Program) error {
 
 func (p *Program) Use() {
 	gl.UseProgram(p.ID)
+}
+
+func (p *Program) GetUniformLocation(name string) int32 {
+	return gl.GetUniformLocation(p.ID, gl.Str(name+"\x00"))
+}
+
+//SetUniformF32 handles setting uniform values of 1-4 floats.
+//Returns false if len(floats) is <1 or >4, or if the uniform was not found.
+//Uniforms aren't found if it doesn't exist or was not used in the shader
+func (p *Program) SetUniformF32(name string, floats ...float32) bool {
+
+	loc := p.GetUniformLocation(name)
+	if loc == 0 {
+		logging.WarnLog.Printf(
+			"Uniform with name '%s' was not found. "+
+				"This is either because it doesn't exist or isn't used in the shader",
+			name)
+		return false
+	}
+
+	switch len(floats) {
+	case 1:
+		gl.Uniform1f(loc, floats[0])
+	case 2:
+		gl.Uniform2f(loc, floats[0], floats[1])
+	case 3:
+		gl.Uniform3f(loc, floats[0], floats[1], floats[2])
+	case 4:
+		gl.Uniform4f(loc, floats[0], floats[1], floats[2], floats[3])
+	default:
+		logging.ErrLog.Println("Invalid input size in SetUniformF32. Size must be 1-4 but got", len(floats))
+		return false
+	}
+
+	return true
+}
+
+//SetUniformI32 handles setting uniform values of 1-4 ints.
+//Returns false if len(ints) is <1 or >4, or if the uniform was not found.
+//Uniforms aren't found if it doesn't exist or was not used in the shader
+func (p *Program) SetUniformI32(name string, ints ...int32) bool {
+
+	loc := p.GetUniformLocation(name)
+	if loc == 0 {
+		logging.WarnLog.Printf(
+			"Uniform with name '%s' was not found. "+
+				"This is either because it doesn't exist or isn't used in the shader",
+			name)
+		return false
+	}
+
+	switch len(ints) {
+	case 1:
+		gl.Uniform1i(loc, ints[0])
+	case 2:
+		gl.Uniform2i(loc, ints[0], ints[1])
+	case 3:
+		gl.Uniform3i(loc, ints[0], ints[1], ints[2])
+	case 4:
+		gl.Uniform4i(loc, ints[0], ints[1], ints[2], ints[3])
+	default:
+		logging.ErrLog.Println("Invalid input size in SetUniformI32. Size must be 1-4 but got", len(ints))
+		return false
+	}
+
+	return true
 }
 
 //Delete deletes all shaders and then deletes the program

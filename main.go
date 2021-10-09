@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/bloeys/go-sdl-engine/input"
+	"github.com/bloeys/go-sdl-engine/logging"
 	"github.com/bloeys/go-sdl-engine/shaders"
 	"github.com/bloeys/go-sdl-engine/timing"
 	"github.com/go-gl/gl/v4.6-core/gl"
@@ -25,7 +26,7 @@ func main() {
 
 	err := sdl.Init(sdl.INIT_EVERYTHING)
 	if err != nil {
-		panic("Failed to init SDL. Err: " + err.Error())
+		logging.ErrLog.Panicln("Failed to init SDL. Err:", err.Error())
 	}
 	defer sdl.Quit()
 
@@ -70,19 +71,19 @@ func main() {
 		winHeight,
 		sdl.WINDOW_OPENGL)
 	if err != nil {
-		panic("Failed to create window. Err: " + err.Error())
+		logging.ErrLog.Panicln("Failed to create window. Err: " + err.Error())
 	}
 	defer window.Destroy()
 
 	//Create GL context
 	glContext, err = window.GLCreateContext()
 	if err != nil {
-		panic("Creating OpenGL context failed. Err: " + err.Error())
+		logging.ErrLog.Panicln("Creating OpenGL context failed. Err: " + err.Error())
 	}
 	defer sdl.GLDeleteContext(glContext)
 
 	if err := gl.Init(); err != nil {
-		panic("Initing OpenGL Context failed. Err: " + err.Error())
+		logging.ErrLog.Panicln("Initing OpenGL Context failed. Err: " + err.Error())
 	}
 
 	initGL()
@@ -100,16 +101,23 @@ func initGL() {
 	gl.Viewport(0, 0, winWidth, winHeight)
 }
 
+var simpleProg shaders.Program
+
 func loadShaders() {
 
-	simpleProg := shaders.NewProgram("simple")
 	simpleVert, err := shaders.NewShaderFromFile("./res/shaders/simple.vert.glsl", shaders.Vertex)
 	panicIfErr(err, "Parsing vert shader failed")
+
 	simpleFrag, err := shaders.NewShaderFromFile("./res/shaders/simple.frag.glsl", shaders.Fragment)
 	panicIfErr(err, "Parsing frag shader failed")
 
+	simpleProg = shaders.NewProgram("simple")
 	simpleProg.AttachShader(simpleVert)
 	simpleProg.AttachShader(simpleFrag)
+
+	simpleProg.SetUniformF32("r", 255)
+
+	simpleProg.Link()
 }
 
 func gameLoop() {
@@ -164,5 +172,5 @@ func panicIfErr(err error, msg string) {
 		return
 	}
 
-	panic(msg + "; Err: " + err.Error())
+	logging.ErrLog.Panicln(msg+". Err:", err.Error())
 }
