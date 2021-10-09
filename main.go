@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	"github.com/bloeys/go-sdl-engine/input"
+	"github.com/bloeys/go-sdl-engine/shaders"
 	"github.com/bloeys/go-sdl-engine/timing"
-	"github.com/go-gl/gl/v4.6-compatibility/gl"
+	"github.com/go-gl/gl/v4.6-core/gl"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -50,8 +51,7 @@ func main() {
 	panicIfErr(err, "")
 
 	//Run in compatiability (old and modern opengl) or modern (core) opengl only
-	// sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_CORE)
-	err = sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_COMPATIBILITY)
+	err = sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_CORE)
 	panicIfErr(err, "")
 
 	//Set wanted opengl version
@@ -86,6 +86,7 @@ func main() {
 	}
 
 	initGL()
+	loadShaders()
 	gameLoop()
 }
 
@@ -97,6 +98,18 @@ func initGL() {
 	gl.ClearDepth(1)
 	gl.DepthFunc(gl.LEQUAL)
 	gl.Viewport(0, 0, winWidth, winHeight)
+}
+
+func loadShaders() {
+
+	simpleProg := shaders.NewProgram("simple")
+	simpleVert, err := shaders.NewShaderFromFile("./res/shaders/simple.vert.glsl", shaders.Vertex)
+	panicIfErr(err, "Parsing vert shader failed")
+	simpleFrag, err := shaders.NewShaderFromFile("./res/shaders/simple.frag.glsl", shaders.Fragment)
+	panicIfErr(err, "Parsing frag shader failed")
+
+	simpleProg.AttachShader(simpleVert)
+	simpleProg.AttachShader(simpleFrag)
 }
 
 func gameLoop() {
@@ -138,24 +151,11 @@ func handleEvents() {
 }
 
 func update() {
-	println(input.AnyKeyDown(), ";", input.AnyMouseBtnDown())
 }
 
 func draw() {
 	//Clear screen and depth buffers
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
-	gl.Begin(gl.TRIANGLES)
-
-	gl.Color3f(1, 0, 0)
-	gl.Vertex3f(0, 0.5, 0)
-
-	gl.Color3f(1, 0, 0)
-	gl.Vertex3f(0.5, 0, 0)
-
-	gl.Color3f(1, 0, 0)
-	gl.Vertex3f(-0.5, 0, 0)
-	gl.End()
 }
 
 func panicIfErr(err error, msg string) {
