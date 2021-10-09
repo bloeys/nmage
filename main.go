@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/bloeys/go-sdl-engine/input"
 	"github.com/bloeys/go-sdl-engine/timing"
 	"github.com/go-gl/gl/v4.6-compatibility/gl"
 	"github.com/veandco/go-sdl2/sdl"
@@ -105,6 +106,7 @@ func gameLoop() {
 		timing.FrameStarted()
 
 		handleEvents()
+		update()
 		draw()
 
 		window.GLSwap()
@@ -116,15 +118,27 @@ func gameLoop() {
 
 func handleEvents() {
 
+	input.EventLoopStarted()
+
 	for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 
 		switch e := event.(type) {
+
+		case *sdl.KeyboardEvent:
+			input.HandleKeyboardEvent(e)
+
+		case *sdl.MouseButtonEvent:
+			input.HandleMouseBtnEvent(e)
 
 		case *sdl.QuitEvent:
 			println("Quit at ", e.Timestamp)
 			isRunning = false
 		}
 	}
+}
+
+func update() {
+	println(input.AnyKeyDown(), ";", input.AnyMouseBtnDown())
 }
 
 func draw() {
