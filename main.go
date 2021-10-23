@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/bloeys/go-sdl-engine/buffers"
 	"github.com/bloeys/go-sdl-engine/input"
 	"github.com/bloeys/go-sdl-engine/logging"
 	"github.com/bloeys/go-sdl-engine/shaders"
@@ -15,8 +16,9 @@ const (
 
 var (
 	isRunning bool = true
+	window    *sdl.Window
 
-	window *sdl.Window
+	simpleShader shaders.ShaderProgram
 )
 
 func main() {
@@ -40,6 +42,8 @@ func main() {
 
 	initOpenGL()
 	loadShaders()
+
+	buffers.HandleBuffers(simpleShader)
 
 	//Game loop
 	for isRunning {
@@ -69,13 +73,13 @@ func initOpenGL() {
 	sdl.GLSetAttribute(sdl.GL_DOUBLEBUFFER, 1)
 	gl.ClearColor(0, 0, 0, 1)
 
-	sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_COMPATIBILITY)
-	// sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_CORE)
+	sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_CORE)
 }
 
 func loadShaders() {
 
-	simpleShader, err := shaders.NewShaderProgram()
+	var err error
+	simpleShader, err = shaders.NewShaderProgram()
 	if err != nil {
 		logging.ErrLog.Fatalln("Failed to create new shader program. Err: ", err)
 	}
@@ -121,17 +125,9 @@ func draw() {
 
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 
-	gl.Begin(gl.TRIANGLES)
-
-	gl.Vertex3f(-0.5, 0.5, 0)
-	gl.Vertex3f(0.5, 0.5, 0)
-	gl.Vertex3f(-0.5, -0.5, 0)
-
-	gl.Vertex3f(0.5, 0.5, 0)
-	gl.Vertex3f(0.5, -0.5, 0)
-	gl.Vertex3f(-0.5, -0.5, 0)
-
-	gl.End()
+	simpleShader.Use()
+	//DRAW
+	gl.DrawArrays(gl.TRIANGLES, 0, 6)
 
 	window.GLSwap()
 }
