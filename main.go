@@ -39,7 +39,7 @@ func main() {
 	defer sdl.GLDeleteContext(glCtx)
 
 	initOpenGL()
-	shaders.LoadShaders()
+	loadShaders()
 
 	//Game loop
 	for isRunning {
@@ -67,9 +67,32 @@ func initOpenGL() {
 	sdl.GLSetAttribute(sdl.GL_BLUE_SIZE, 8)
 
 	sdl.GLSetAttribute(sdl.GL_DOUBLEBUFFER, 1)
+	gl.ClearColor(0, 0, 0, 1)
 
 	sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_COMPATIBILITY)
 	// sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_CORE)
+}
+
+func loadShaders() {
+
+	simpleShader, err := shaders.NewShaderProgram()
+	if err != nil {
+		logging.ErrLog.Fatalln("Failed to create new shader program. Err: ", err)
+	}
+
+	vertShader, err := shaders.LoadAndCompilerShader("./res/shaders/simple.vert.glsl", shaders.VertexShaderType)
+	if err != nil {
+		logging.ErrLog.Fatalln("Failed to create new shader. Err: ", err)
+	}
+
+	fragShader, err := shaders.LoadAndCompilerShader("./res/shaders/simple.frag.glsl", shaders.FragmentShaderType)
+	if err != nil {
+		logging.ErrLog.Fatalln("Failed to create new shader. Err: ", err)
+	}
+
+	simpleShader.AttachShader(vertShader)
+	simpleShader.AttachShader(fragShader)
+	simpleShader.Link()
 }
 
 func handleInputs() {
@@ -95,4 +118,20 @@ func runGameLogic() {
 }
 
 func draw() {
+
+	gl.Clear(gl.COLOR_BUFFER_BIT)
+
+	gl.Begin(gl.TRIANGLES)
+
+	gl.Vertex3f(-0.5, 0.5, 0)
+	gl.Vertex3f(0.5, 0.5, 0)
+	gl.Vertex3f(-0.5, -0.5, 0)
+
+	gl.Vertex3f(0.5, 0.5, 0)
+	gl.Vertex3f(0.5, -0.5, 0)
+	gl.Vertex3f(-0.5, -0.5, 0)
+
+	gl.End()
+
+	window.GLSwap()
 }
