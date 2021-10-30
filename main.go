@@ -19,6 +19,7 @@ var (
 	window    *sdl.Window
 
 	simpleShader shaders.ShaderProgram
+	bo           *buffers.BufferObject
 )
 
 func main() {
@@ -42,8 +43,13 @@ func main() {
 
 	initOpenGL()
 	loadShaders()
+	loadBuffers()
 
-	buffers.HandleBuffers(simpleShader)
+	simpleShader.SetAttribute("vertPos", bo, bo.VertPosBuf)
+	simpleShader.EnableAttribute("vertPos")
+
+	simpleShader.SetAttribute("vertColor", bo, bo.ColorBuf)
+	simpleShader.EnableAttribute("vertColor")
 
 	//Game loop
 	for isRunning {
@@ -99,6 +105,33 @@ func loadShaders() {
 	simpleShader.Link()
 }
 
+func loadBuffers() {
+
+	vertices := []float32{
+		-0.5, 0.5, 0,
+		0.5, 0.5, 0,
+		-0.5, -0.5, 0,
+
+		0.5, 0.5, 0,
+		0.5, -0.5, 0,
+		-0.5, -0.5, 0,
+	}
+
+	colors := []float32{
+		1, 0, 0,
+		0, 0, 1,
+		0, 0, 1,
+
+		0, 0, 1,
+		0, 0, 1,
+		0, 0, 1,
+	}
+
+	bo = buffers.NewBufferObject()
+	bo.GenBuffer(vertices, buffers.BufUsageStatic, buffers.BufTypeVertPos, buffers.DataTypeVec3)
+	bo.GenBuffer(colors, buffers.BufUsageStatic, buffers.BufTypeColor, buffers.DataTypeVec3)
+}
+
 func handleInputs() {
 
 	input.EventLoopStart()
@@ -125,9 +158,12 @@ func draw() {
 
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 
-	simpleShader.Use()
+	simpleShader.Activate()
+
 	//DRAW
+	bo.Activate()
 	gl.DrawArrays(gl.TRIANGLES, 0, 6)
+	bo.Deactivate()
 
 	window.GLSwap()
 }

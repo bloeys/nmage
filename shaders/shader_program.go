@@ -1,6 +1,7 @@
 package shaders
 
 import (
+	"github.com/bloeys/go-sdl-engine/buffers"
 	"github.com/bloeys/go-sdl-engine/logging"
 	"github.com/go-gl/gl/v4.6-compatibility/gl"
 )
@@ -36,12 +37,36 @@ func (sp *ShaderProgram) Link() {
 	}
 }
 
+func (sp *ShaderProgram) Activate() {
+	gl.UseProgram(sp.ID)
+}
+
+func (sp *ShaderProgram) Deactivate() {
+	gl.UseProgram(0)
+}
+
 func (sp *ShaderProgram) GetAttribLoc(attribName string) int32 {
 	return gl.GetAttribLocation(sp.ID, gl.Str(attribName+"\x00"))
 }
 
-func (sp *ShaderProgram) Use() {
-	gl.UseProgram(sp.ID)
+func (sp *ShaderProgram) SetAttribute(attribName string, bufObj *buffers.BufferObject, buf *buffers.Buffer) {
+
+	bufObj.Activate()
+	buf.Activate()
+
+	attribLoc := sp.GetAttribLoc(attribName)
+	gl.VertexAttribPointer(uint32(attribLoc), buf.ElementCount, buf.ElementType, false, buf.GetSize(), gl.PtrOffset(0))
+
+	bufObj.Activate()
+	buf.Deactivate()
+}
+
+func (sp *ShaderProgram) EnableAttribute(attribName string) {
+	gl.EnableVertexAttribArray(uint32(sp.GetAttribLoc(attribName)))
+}
+
+func (sp *ShaderProgram) DisableAttribute(attribName string) {
+	gl.DisableVertexAttribArray(uint32(sp.GetAttribLoc(attribName)))
 }
 
 func (sp *ShaderProgram) Delete() {
