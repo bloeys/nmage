@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/bloeys/go-sdl-engine/logging"
-	"github.com/go-gl/gl/v4.6-compatibility/gl"
+	"github.com/go-gl/gl/v4.6-core/gl"
 )
 
 type Shader struct {

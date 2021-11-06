@@ -2,39 +2,58 @@ package buffers
 
 import (
 	"github.com/bloeys/go-sdl-engine/logging"
-	"github.com/go-gl/gl/v4.6-compatibility/gl"
+	"github.com/go-gl/gl/v4.6-core/gl"
 )
 
-type BufferType int
+type BufGLType int
 
 const (
-	BufTypeUnknown BufferType = iota
+	BufGLTypeUnknown BufGLType = 0
+	//Generic array of data. Should be used for most data like vertex positions, vertex colors etc.
+	BufGLTypeArray   BufGLType = gl.ARRAY_BUFFER
+	BufGLTypeIndices BufGLType = gl.ELEMENT_ARRAY_BUFFER
+)
+
+type BufType int
+
+const (
+	BufTypeUnknown BufType = iota
 	BufTypeVertPos
 	BufTypeColor
+	BufTypeIndex
 )
 
-type BufferGLType int
+func (bt BufType) GetBufferGLType() BufGLType {
+	switch bt {
 
-const (
-	//Generic array of data. Should be used for most data like vertex positions, vertex colors etc.
-	BufGLTypeArrayBuffer BufferGLType = gl.ARRAY_BUFFER
-)
+	case BufTypeColor:
+		fallthrough
+	case BufTypeVertPos:
+		return BufGLTypeArray
 
-type BufferUsage int
+	case BufTypeIndex:
+		return BufGLTypeIndices
+	default:
+		logging.WarnLog.Println("Unknown BufferType. BufferType: ", bt)
+		return BufGLTypeUnknown
+	}
+}
+
+type BufUsage int
 
 const (
 	//Buffer is set only once and used many times
-	BufUsageStatic BufferUsage = gl.STATIC_DRAW
+	BufUsageStatic BufUsage = gl.STATIC_DRAW
 	//Buffer is changed a lot and used many times
-	BufUsageDynamic BufferUsage = gl.DYNAMIC_DRAW
+	BufUsageDynamic BufUsage = gl.DYNAMIC_DRAW
 	//Buffer is set only once and used by the GPU at most a few times
-	BufUsageStream BufferUsage = gl.STREAM_DRAW
+	BufUsageStream BufUsage = gl.STREAM_DRAW
 )
 
 type Buffer struct {
 	ID     uint32
-	Type   BufferType
-	GLType BufferGLType
+	Type   BufType
+	GLType BufGLType
 	DataTypeInfo
 }
 
@@ -50,9 +69,10 @@ type BufferObject struct {
 	VAOID      uint32
 	VertPosBuf *Buffer
 	ColorBuf   *Buffer
+	IndexBuf   *Buffer
 }
 
-func (bo *BufferObject) GenBuffer(data []float32, bufUsage BufferUsage, bufType BufferType, bufDataType DataType) {
+func (bo *BufferObject) GenBuffer(data []float32, bufUsage BufUsage, bufType BufType, bufDataType DataType) {
 
 	gl.BindVertexArray(bo.VAOID)
 
@@ -66,7 +86,35 @@ func (bo *BufferObject) GenBuffer(data []float32, bufUsage BufferUsage, bufType 
 	buf := &Buffer{
 		ID:           vboID,
 		Type:         bufType,
-		GLType:       BufGLTypeArrayBuffer,
+		GLType:       bufType.GetBufferGLType(),
+		DataTypeInfo: GetDataTypeInfo(bufDataType),
+	}
+	bo.SetBuffer(buf)
+
+	//Fill buffer with data
+	gl.BindBuffer(uint32(buf.GLType), buf.ID)
+	gl.BufferData(uint32(buf.GLType), int(buf.DataTypeInfo.ElementSize)*len(data), gl.Ptr(data), uint32(bufUsage))
+
+	//Unbind everything
+	gl.BindVertexArray(0)
+	gl.BindBuffer(uint32(buf.GLType), 0)
+}
+
+func (bo *BufferObject) GenBufferUint32(data []uint32, bufUsage BufUsage, bufType BufType, bufDataType DataType) {
+
+	gl.BindVertexArray(bo.VAOID)
+
+	//Create vertex buffer object
+	var vboID uint32
+	gl.CreateBuffers(1, &vboID)
+	if vboID == 0 {
+		logging.ErrLog.Println("Failed to create openGL buffer")
+	}
+
+	buf := &Buffer{
+		ID:           vboID,
+		Type:         bufType,
+		GLType:       bufType.GetBufferGLType(),
 		DataTypeInfo: GetDataTypeInfo(bufDataType),
 	}
 	bo.SetBuffer(buf)
@@ -87,6 +135,8 @@ func (bo *BufferObject) SetBuffer(buf *Buffer) {
 		bo.VertPosBuf = buf
 	case BufTypeColor:
 		bo.ColorBuf = buf
+	case BufTypeIndex:
+		bo.IndexBuf = buf
 	default:
 		logging.WarnLog.Println("Unknown buffer type in SetBuffer. Type:", buf.Type)
 	}

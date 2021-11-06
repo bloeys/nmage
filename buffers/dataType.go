@@ -2,13 +2,14 @@ package buffers
 
 import (
 	"github.com/bloeys/go-sdl-engine/logging"
-	"github.com/go-gl/gl/v4.6-compatibility/gl"
+	"github.com/go-gl/gl/v4.6-core/gl"
 )
 
 type DataType int
 
 const (
-	DataTypeUnknown = iota
+	DataTypeUnknown DataType = iota
+	DataTypeUint32
 	DataTypeInt32
 	DataTypeFloat32
 	DataTypeFloat64
@@ -37,6 +38,8 @@ func (dti *DataTypeInfo) GetSize() int32 {
 func GetDataTypeInfo(dt DataType) DataTypeInfo {
 
 	switch dt {
+	case DataTypeUint32:
+		fallthrough
 	case DataTypeInt32:
 		return DataTypeInfo{
 			ElementSize:  4,

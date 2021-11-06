@@ -1,9 +1,10 @@
 package shaders
 
 import (
+	"github.com/bloeys/gglm/gglm"
 	"github.com/bloeys/go-sdl-engine/buffers"
 	"github.com/bloeys/go-sdl-engine/logging"
-	"github.com/go-gl/gl/v4.6-compatibility/gl"
+	"github.com/go-gl/gl/v4.6-core/gl"
 )
 
 type ShaderProgram struct {
@@ -67,6 +68,36 @@ func (sp *ShaderProgram) EnableAttribute(attribName string) {
 
 func (sp *ShaderProgram) DisableAttribute(attribName string) {
 	gl.DisableVertexAttribArray(uint32(sp.GetAttribLoc(attribName)))
+}
+
+func (sp *ShaderProgram) SetUnifVec2(uniformName string, vec2 *gglm.Vec2) {
+	loc := gl.GetUniformLocation(sp.ID, gl.Str(uniformName+"\x00"))
+	gl.ProgramUniform2fv(sp.ID, loc, 1, &vec2.Data[0])
+}
+
+func (sp *ShaderProgram) SetUnifVec3(uniformName string, vec3 *gglm.Vec3) {
+	loc := gl.GetUniformLocation(sp.ID, gl.Str(uniformName+"\x00"))
+	gl.ProgramUniform3fv(sp.ID, loc, 1, &vec3.Data[0])
+}
+
+func (sp *ShaderProgram) SetUnifVec4(uniformName string, vec4 *gglm.Vec4) {
+	loc := gl.GetUniformLocation(sp.ID, gl.Str(uniformName+"\x00"))
+	gl.ProgramUniform4fv(sp.ID, loc, 1, &vec4.Data[0])
+}
+
+func (sp *ShaderProgram) SetUnifMat2(uniformName string, mat2 *gglm.Mat2) {
+	loc := gl.GetUniformLocation(sp.ID, gl.Str(uniformName+"\x00"))
+	gl.ProgramUniformMatrix2fv(sp.ID, loc, 1, true, &mat2.Data[0])
+}
+
+func (sp *ShaderProgram) SetUnifMat3(uniformName string, mat3 *gglm.Mat3) {
+	loc := gl.GetUniformLocation(sp.ID, gl.Str(uniformName+"\x00"))
+	gl.ProgramUniformMatrix3fv(sp.ID, loc, 1, true, &mat3.Data[0])
+}
+
+func (sp *ShaderProgram) SetUnifMat4(uniformName string, mat4 *gglm.Mat4) {
+	loc := gl.GetUniformLocation(sp.ID, gl.Str(uniformName+"\x00"))
+	gl.ProgramUniformMatrix4fv(sp.ID, loc, 1, true, &mat4.Data[0])
 }
 
 func (sp *ShaderProgram) Delete() {
