@@ -1,4 +1,4 @@
-# go-sdl-test
+# nMage
 
 ## GLSL Linter
 
