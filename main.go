@@ -31,7 +31,7 @@ func main() {
 		logging.ErrLog.Fatalln("Failed to init SDL. Err:", err)
 	}
 
-	window, err = sdl.CreateWindow("Go SDL Engine", sdl.WINDOWPOS_CENTERED, sdl.WINDOWPOS_CENTERED, winWidth, winHeight, sdl.WINDOW_OPENGL)
+	window, err = sdl.CreateWindow("Go SDL Engine", sdl.WINDOWPOS_CENTERED, sdl.WINDOWPOS_CENTERED, winWidth, winHeight, sdl.WINDOW_OPENGL|sdl.WINDOW_RESIZABLE)
 	if err != nil {
 		logging.ErrLog.Fatalln("Failed to create window. Err: ", err)
 	}
