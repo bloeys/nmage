@@ -1,6 +1,6 @@
 # nMage
 
-nMage is a (hopefully!) high performance 3D Game Engine written in Go being developed [live](https://twitch.tv/bloeys), with recording posted on [YouTube](https://www.youtube.com/channel/UCCf4qyNGPVwpj1HYFGahs_A).
+nMage is a (hopefully!) high performance 3D Game Engine written in Go being developed [live](https://twitch.tv/bloeys), with recordings posted on [YouTube](https://www.youtube.com/channel/UCCf4qyNGPVwpj1HYFGahs_A).
 
 This project is being built with the goals being (in no particular order):
 
