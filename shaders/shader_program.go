@@ -87,17 +87,17 @@ func (sp *ShaderProgram) SetUnifVec4(uniformName string, vec4 *gglm.Vec4) {
 
 func (sp *ShaderProgram) SetUnifMat2(uniformName string, mat2 *gglm.Mat2) {
 	loc := gl.GetUniformLocation(sp.ID, gl.Str(uniformName+"\x00"))
-	gl.ProgramUniformMatrix2fv(sp.ID, loc, 1, true, &mat2.Data[0])
+	gl.ProgramUniformMatrix2fv(sp.ID, loc, 1, false, &mat2.Data[0][0])
 }
 
 func (sp *ShaderProgram) SetUnifMat3(uniformName string, mat3 *gglm.Mat3) {
 	loc := gl.GetUniformLocation(sp.ID, gl.Str(uniformName+"\x00"))
-	gl.ProgramUniformMatrix3fv(sp.ID, loc, 1, true, &mat3.Data[0])
+	gl.ProgramUniformMatrix3fv(sp.ID, loc, 1, false, &mat3.Data[0][0])
 }
 
 func (sp *ShaderProgram) SetUnifMat4(uniformName string, mat4 *gglm.Mat4) {
 	loc := gl.GetUniformLocation(sp.ID, gl.Str(uniformName+"\x00"))
-	gl.ProgramUniformMatrix4fv(sp.ID, loc, 1, true, &mat4.Data[0])
+	gl.ProgramUniformMatrix4fv(sp.ID, loc, 1, false, &mat4.Data[0][0])
 }
 
 func (sp *ShaderProgram) Delete() {
