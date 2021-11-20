@@ -2,7 +2,7 @@ package buffers
 
 import (
 	"github.com/bloeys/go-sdl-engine/logging"
-	"github.com/go-gl/gl/v4.6-core/gl"
+	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
 type DataType int

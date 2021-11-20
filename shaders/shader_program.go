@@ -4,7 +4,7 @@ import (
 	"github.com/bloeys/gglm/gglm"
 	"github.com/bloeys/go-sdl-engine/buffers"
 	"github.com/bloeys/go-sdl-engine/logging"
-	"github.com/go-gl/gl/v4.6-core/gl"
+	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
 type ShaderProgram struct {
@@ -68,6 +68,11 @@ func (sp *ShaderProgram) EnableAttribute(attribName string) {
 
 func (sp *ShaderProgram) DisableAttribute(attribName string) {
 	gl.DisableVertexAttribArray(uint32(sp.GetAttribLoc(attribName)))
+}
+
+func (sp *ShaderProgram) SetUnifFloat32(uniformName string, val float32) {
+	loc := gl.GetUniformLocation(sp.ID, gl.Str(uniformName+"\x00"))
+	gl.ProgramUniform1f(sp.ID, loc, val)
 }
 
 func (sp *ShaderProgram) SetUnifVec2(uniformName string, vec2 *gglm.Vec2) {

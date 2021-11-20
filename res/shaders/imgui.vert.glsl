@@ -1,4 +1,4 @@
-#version 460
+#version 410
 
 uniform mat4 ProjMtx;
 

@@ -1,6 +1,6 @@
 package shaders
 
-import "github.com/go-gl/gl/v4.6-core/gl"
+import "github.com/go-gl/gl/v4.1-core/gl"
 
 type ShaderType int
 

@@ -1,22 +1,21 @@
 package main
 
 import (
+	"runtime"
+
 	"github.com/bloeys/gglm/gglm"
 	"github.com/bloeys/go-sdl-engine/buffers"
 	"github.com/bloeys/go-sdl-engine/input"
 	"github.com/bloeys/go-sdl-engine/logging"
 	"github.com/bloeys/go-sdl-engine/res/models"
 	"github.com/bloeys/go-sdl-engine/shaders"
-	"github.com/go-gl/gl/v4.6-core/gl"
+	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
 //TODO:
-//Resizeable window - Done
-//Moving camera - Done
-//FIX Ortho function
-//ImGUI integration
+//Abstract UI
 //Asset loading
 //Rework buffers package
 //Interleaved or packed buffers (xyzxyzxyz OR xxxyyyzzz)
@@ -50,7 +49,9 @@ var (
 
 func main() {
 
-	err := sdl.Init(sdl.INIT_EVERYTHING)
+	runtime.LockOSThread()
+
+	err := initSDL()
 	if err != nil {
 		logging.ErrLog.Fatalln("Failed to init SDL. Err:", err)
 	}
@@ -67,7 +68,11 @@ func main() {
 	}
 	defer sdl.GLDeleteContext(glCtx)
 
-	initOpenGL()
+	err = initOpenGL()
+	if err != nil {
+		logging.ErrLog.Fatalln(err)
+	}
+
 	loadShaders()
 	loadBuffers()
 	initImGUI()
@@ -107,14 +112,15 @@ func main() {
 	}
 }
 
-func initOpenGL() {
+func initSDL() error {
 
-	if err := gl.Init(); err != nil {
-		logging.ErrLog.Fatalln(err)
+	err := sdl.Init(sdl.INIT_EVERYTHING)
+	if err != nil {
+		return err
 	}
 
 	sdl.GLSetAttribute(sdl.MAJOR_VERSION, 4)
-	sdl.GLSetAttribute(sdl.MINOR_VERSION, 6)
+	sdl.GLSetAttribute(sdl.MINOR_VERSION, 1)
 
 	// R(0-255) G(0-255) B(0-255)
 	sdl.GLSetAttribute(sdl.GL_RED_SIZE, 8)
@@ -125,8 +131,19 @@ func initOpenGL() {
 	sdl.GLSetAttribute(sdl.GL_DEPTH_SIZE, 24)
 	sdl.GLSetAttribute(sdl.GL_STENCIL_SIZE, 8)
 
-	gl.ClearColor(0, 0, 0, 1)
 	sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_CORE)
+
+	return nil
+}
+
+func initOpenGL() error {
+
+	if err := gl.Init(); err != nil {
+		return err
+	}
+
+	gl.ClearColor(0, 0, 0, 1)
+	return nil
 }
 
 func loadShaders() {
@@ -236,40 +253,135 @@ func initImGUI() {
 	imShader.EnableAttribute("UV")
 	imShader.EnableAttribute("Color")
 	imShader.Deactivate()
+
+	//Init imgui input mapping
+	keys := map[int]int{
+		imgui.KeyTab:        sdl.SCANCODE_TAB,
+		imgui.KeyLeftArrow:  sdl.SCANCODE_LEFT,
+		imgui.KeyRightArrow: sdl.SCANCODE_RIGHT,
+		imgui.KeyUpArrow:    sdl.SCANCODE_UP,
+		imgui.KeyDownArrow:  sdl.SCANCODE_DOWN,
+		imgui.KeyPageUp:     sdl.SCANCODE_PAGEUP,
+		imgui.KeyPageDown:   sdl.SCANCODE_PAGEDOWN,
+		imgui.KeyHome:       sdl.SCANCODE_HOME,
+		imgui.KeyEnd:        sdl.SCANCODE_END,
+		imgui.KeyInsert:     sdl.SCANCODE_INSERT,
+		imgui.KeyDelete:     sdl.SCANCODE_DELETE,
+		imgui.KeyBackspace:  sdl.SCANCODE_BACKSPACE,
+		imgui.KeySpace:      sdl.SCANCODE_BACKSPACE,
+		imgui.KeyEnter:      sdl.SCANCODE_RETURN,
+		imgui.KeyEscape:     sdl.SCANCODE_ESCAPE,
+		imgui.KeyA:          sdl.SCANCODE_A,
+		imgui.KeyC:          sdl.SCANCODE_C,
+		imgui.KeyV:          sdl.SCANCODE_V,
+		imgui.KeyX:          sdl.SCANCODE_X,
+		imgui.KeyY:          sdl.SCANCODE_Y,
+		imgui.KeyZ:          sdl.SCANCODE_Z,
+	}
+
+	// Keyboard mapping. ImGui will use those indices to peek into the io.KeysDown[] array.
+	for imguiKey, nativeKey := range keys {
+		imIO.KeyMap(imguiKey, nativeKey)
+	}
 }
 
 func handleInputs() {
 
-	input.EventLoopStart()
+	imIO := imgui.CurrentIO()
 
 	for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 
 		switch e := event.(type) {
 
-		case *sdl.KeyboardEvent:
-			input.HandleKeyboardEvent(e)
-		case *sdl.MouseButtonEvent:
-			input.HandleMouseEvent(e)
-		case *sdl.WindowEvent:
+		case *sdl.MouseWheelEvent:
 
-			if e.Type != sdl.WINDOWEVENT_RESIZED {
-				continue
+			var deltaX, deltaY float32
+			if e.X > 0 {
+				deltaX++
+			} else if e.X < 0 {
+				deltaX--
 			}
 
-			winWidth = e.Data1
-			winHeight = e.Data2
-			window.SetSize(int32(winWidth), int32(winHeight))
+			if e.Y > 0 {
+				deltaY++
+			} else if e.Y < 0 {
+				deltaY--
+			}
 
-			projMat = gglm.Perspective(45*gglm.Deg2Rad, float32(winWidth)/float32(winHeight), 0.1, 20)
-			simpleShader.SetUnifMat4("projMat", projMat)
+			imIO.AddMouseWheelDelta(deltaX, deltaY)
+
+		case *sdl.KeyboardEvent:
+			input.HandleKeyboardEvent(e)
+
+			if e.Type == sdl.KEYDOWN {
+				imIO.KeyPress(int(e.Keysym.Scancode))
+			} else if e.Type == sdl.KEYUP {
+				imIO.KeyRelease(int(e.Keysym.Scancode))
+			}
+
+		case *sdl.TextInputEvent:
+			imIO.AddInputCharacters(string(e.Text[:]))
+
+		case *sdl.MouseButtonEvent:
+			input.HandleMouseEvent(e)
+
+		case *sdl.WindowEvent:
+
+			//NOTE: SDL is not firing window resize, but is resizing the window by itself
+			// if e.Type != sdl.WINDOWEVENT_SIZE_CHANGED {
+			// 	continue
+			// }
+
+			// winWidth = e.Data1
+			// winHeight = e.Data2
+			// window.SetSize(int32(winWidth), int32(winHeight))
+
+			// projMat = gglm.Perspective(45*gglm.Deg2Rad, float32(winWidth)/float32(winHeight), 0.1, 20)
+			// simpleShader.SetUnifMat4("projMat", projMat)
 
 		case *sdl.QuitEvent:
 			isRunning = false
 		}
 	}
+
+	currWinWidth, currWinHeight := window.GetSize()
+	if winWidth != currWinWidth || winHeight != currWinHeight {
+		handleWindowResize(currWinWidth, currWinHeight)
+	}
+
+	// If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release events that are shorter than 1 frame.
+	x, y, _ := sdl.GetMouseState()
+	imIO.SetMousePosition(imgui.Vec2{X: float32(x), Y: float32(y)})
+
+	imIO.SetMouseButtonDown(0, input.MouseDown(sdl.BUTTON_LEFT))
+	imIO.SetMouseButtonDown(1, input.MouseDown(sdl.BUTTON_RIGHT))
+	imIO.SetMouseButtonDown(2, input.MouseDown(sdl.BUTTON_MIDDLE))
+
+	imIO.KeyShift(sdl.SCANCODE_LSHIFT, sdl.SCANCODE_RSHIFT)
+	imIO.KeyCtrl(sdl.SCANCODE_LCTRL, sdl.SCANCODE_RCTRL)
+	imIO.KeyAlt(sdl.SCANCODE_LALT, sdl.SCANCODE_RALT)
+}
+
+func handleWindowResize(newWinWidth, newWinHeight int32) {
+
+	winWidth = newWinWidth
+	winHeight = newWinHeight
+
+	fbWidth, fbHeight := window.GLGetDrawableSize()
+	if fbWidth <= 0 || fbHeight <= 0 {
+		return
+	}
+	gl.Viewport(0, 0, fbWidth, fbHeight)
+
+	projMat = gglm.Perspective(45*gglm.Deg2Rad, float32(winWidth)/float32(winHeight), 0.1, 20)
+	simpleShader.SetUnifMat4("projMat", projMat)
 }
 
 var time uint64 = 0
+var name string = ""
+
+var ambientColor gglm.Vec3
+var ambientColorStrength float32 = 1
 
 func runGameLogic() {
 
@@ -303,13 +415,19 @@ func runGameLogic() {
 	time = currentTime
 
 	imgui.NewFrame()
-
 	if imgui.Button("Click Me!") {
 		logging.InfoLog.Println("Clicked!")
 	}
+	imgui.InputText("Name", &name)
 
-	// open := true
-	// imgui.ShowDemoWindow(&open)
+	if imgui.SliderFloat3("Ambient Color", &ambientColor.Data, 0, 1) {
+		simpleShader.SetUnifVec3("ambientLightColor", &ambientColor)
+	}
+
+	if imgui.SliderFloat("Ambient Color Strength", &ambientColorStrength, 0, 1) {
+		simpleShader.SetUnifFloat32("ambientStrength", ambientColorStrength)
+	}
+
 	imgui.Render()
 }
 
@@ -337,7 +455,7 @@ func drawUI() {
 	if fbWidth <= 0 || fbHeight <= 0 {
 		return
 	}
-	gl.Viewport(0, 0, fbWidth, fbHeight)
+
 	drawData := imgui.RenderedDrawData()
 	drawData.ScaleClipRects(imgui.Vec2{
 		X: float32(fbWidth) / float32(winWidth),
@@ -356,20 +474,14 @@ func drawUI() {
 	// Setup viewport, orthographic projection matrix
 	// Our visible imgui space lies from draw_data->DisplayPos (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right).
 	// DisplayMin is typically (0,0) for single viewport apps.
-	orthoProjection := [4][4]float32{
-		{2.0 / float32(winWidth), 0.0, 0.0, 0.0},
-		{0.0, 2.0 / -float32(winHeight), 0.0, 0.0},
-		{0.0, 0.0, -1.0, 0.0},
-		{-1.0, 1.0, 0.0, 1.0},
-	}
 
 	imShader.Activate()
 
 	gl.Uniform1i(gl.GetUniformLocation(imShader.ID, gl.Str("Texture\x00")), 0)
 
-	gl.UniformMatrix4fv(gl.GetUniformLocation(imShader.ID, gl.Str("ProjMtx"+"\x00")), 1, false, &orthoProjection[0][0])
-	// orthoMat := gglm.Ortho(0, float32(winWidth), float32(winHeight), 0, 0.1, 20)
-	// imShader.SetUnifMat4("ProjMtx", &orthoMat.Mat4)
+	//PERF: only update the ortho matrix on window resize
+	orthoMat := gglm.Ortho(0, float32(winWidth), 0, float32(winHeight), 0, 20)
+	imShader.SetUnifMat4("ProjMtx", &orthoMat.Mat4)
 	gl.BindSampler(0, 0) // Rely on combined texture/sampler state.
 
 	// Recreate the VAO every time

@@ -2,7 +2,7 @@ package buffers
 
 import (
 	"github.com/bloeys/go-sdl-engine/logging"
-	"github.com/go-gl/gl/v4.6-core/gl"
+	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
 type BufGLType int
@@ -78,7 +78,7 @@ func (bo *BufferObject) GenBuffer(data []float32, bufUsage BufUsage, bufType Buf
 
 	//Create vertex buffer object
 	var vboID uint32
-	gl.CreateBuffers(1, &vboID)
+	gl.GenBuffers(1, &vboID)
 	if vboID == 0 {
 		logging.ErrLog.Println("Failed to create openGL buffer")
 	}
@@ -106,7 +106,7 @@ func (bo *BufferObject) GenBufferUint32(data []uint32, bufUsage BufUsage, bufTyp
 
 	//Create vertex buffer object
 	var vboID uint32
-	gl.CreateBuffers(1, &vboID)
+	gl.GenBuffers(1, &vboID)
 	if vboID == 0 {
 		logging.ErrLog.Println("Failed to create openGL buffer")
 	}

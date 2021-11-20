@@ -1,4 +1,4 @@
-#version 460
+#version 410
 
 in vec3 vertPos;
 in vec3 vertColor;
