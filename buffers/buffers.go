@@ -153,7 +153,7 @@ func (bo *BufferObject) Deactivate() {
 func NewBufferObject() *BufferObject {
 
 	var vaoID uint32
-	gl.CreateVertexArrays(1, &vaoID)
+	gl.GenVertexArrays(1, &vaoID)
 	if vaoID == 0 {
 		logging.ErrLog.Println("Failed to create openGL vertex array object")
 	}
