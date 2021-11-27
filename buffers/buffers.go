@@ -21,11 +21,14 @@ const (
 	BufTypeVertPos
 	BufTypeColor
 	BufTypeIndex
+	BufTypeNormal
 )
 
 func (bt BufType) GetBufferGLType() BufGLType {
 	switch bt {
 
+	case BufTypeNormal:
+		fallthrough
 	case BufTypeColor:
 		fallthrough
 	case BufTypeVertPos:
@@ -68,6 +71,7 @@ func (b *Buffer) Deactivate() {
 type BufferObject struct {
 	VAOID      uint32
 	VertPosBuf *Buffer
+	NormalBuf  *Buffer
 	ColorBuf   *Buffer
 	IndexBuf   *Buffer
 }
@@ -133,6 +137,8 @@ func (bo *BufferObject) SetBuffer(buf *Buffer) {
 	switch buf.Type {
 	case BufTypeVertPos:
 		bo.VertPosBuf = buf
+	case BufTypeNormal:
+		bo.NormalBuf = buf
 	case BufTypeColor:
 		bo.ColorBuf = buf
 	case BufTypeIndex:

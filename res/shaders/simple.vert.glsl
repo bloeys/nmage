@@ -1,9 +1,12 @@
 #version 410
 
-in vec3 vertPos;
-in vec3 vertColor;
+in vec3 vertPosIn;
+in vec3 vertColorIn;
+in vec3 vertNormalIn;
 
-out vec3 outColor;
+out vec3 vertColor;
+out vec3 vertNormal;
+out vec3 fragPos;
 
 //MVP = Model View Projection
 uniform mat4 modelMat;
@@ -12,6 +15,9 @@ uniform mat4 projMat;
 
 void main()
 {
-    outColor = vertColor;
-    gl_Position = projMat * viewMat * modelMat * (vec4(vertPos, 1.0)); // vec4(vertPos.x, vertPos.y, vertPos.z, 1.0)
+    vertColor = vertColorIn;
+    vertNormal = vertNormalIn;
+    fragPos = vec3(modelMat * vec4(vertPosIn, 1.0));
+
+    gl_Position = projMat * viewMat * modelMat * vec4(vertPosIn, 1.0);
 }

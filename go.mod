@@ -11,4 +11,7 @@ require (
 	github.com/inkyblackness/imgui-go/v4 v4.3.0
 )
 
-require github.com/inkyblackness/imgui-go v1.12.0 // indirect
+require (
+	github.com/bloeys/assimp-go v0.2.0 // indirect
+	github.com/inkyblackness/imgui-go v1.12.0 // indirect
+)

@@ -1,13 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"runtime"
 
+	"github.com/bloeys/assimp-go/asig"
 	"github.com/bloeys/gglm/gglm"
+	"github.com/bloeys/go-sdl-engine/asserts"
 	"github.com/bloeys/go-sdl-engine/buffers"
 	"github.com/bloeys/go-sdl-engine/input"
 	"github.com/bloeys/go-sdl-engine/logging"
-	"github.com/bloeys/go-sdl-engine/res/models"
 	"github.com/bloeys/go-sdl-engine/shaders"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/inkyblackness/imgui-go/v4"
@@ -77,11 +79,15 @@ func main() {
 	loadBuffers()
 	initImGUI()
 
-	simpleShader.SetAttribute("vertPos", bo, bo.VertPosBuf)
-	simpleShader.EnableAttribute("vertPos")
+	//Enable vertex attributes
+	simpleShader.SetAttribute("vertPosIn", bo, bo.VertPosBuf)
+	simpleShader.EnableAttribute("vertPosIn")
 
-	// simpleShader.SetAttribute("vertColor", bo, bo.ColorBuf)
-	// simpleShader.EnableAttribute("vertColor")
+	simpleShader.SetAttribute("vertColorIn", bo, bo.ColorBuf)
+	simpleShader.EnableAttribute("vertColorIn")
+
+	simpleShader.SetAttribute("vertNormalIn", bo, bo.NormalBuf)
+	simpleShader.EnableAttribute("vertNormalIn")
 
 	//Movement, scale and rotation
 	translationMat := gglm.NewTranslationMat(gglm.NewVec3(0, 0, 0))
@@ -100,6 +106,10 @@ func main() {
 	//Perspective/Depth
 	projMat := gglm.Perspective(45*gglm.Deg2Rad, float32(winWidth)/float32(winHeight), 0.1, 20)
 	simpleShader.SetUnifMat4("projMat", projMat)
+
+	//Lights
+	simpleShader.SetUnifVec3("lightPos1", &lightPos1)
+	simpleShader.SetUnifVec3("lightColor1", &lightColor1)
 
 	//Game loop
 	for isRunning {
@@ -189,36 +199,58 @@ func loadShaders() {
 	imShader.Link()
 }
 
+func flattenVec3(vec3s []gglm.Vec3) []float32 {
+
+	floats := make([]float32, len(vec3s)*3)
+	for i := 0; i < len(vec3s); i++ {
+		floats[i*3+0] = vec3s[i].X()
+		floats[i*3+1] = vec3s[i].Y()
+		floats[i*3+2] = vec3s[i].Z()
+	}
+
+	return floats
+}
+
+func flattenVec4(vec4s []gglm.Vec4) []float32 {
+
+	floats := make([]float32, len(vec4s)*4)
+	for i := 0; i < len(vec4s); i++ {
+		floats[i*4+0] = vec4s[i].X()
+		floats[i*4+1] = vec4s[i].Y()
+		floats[i*4+2] = vec4s[i].Z()
+		floats[i*4+3] = vec4s[i].W()
+	}
+
+	return floats
+}
+
+func flattenFaces(faces []asig.Face) []uint32 {
+
+	asserts.True(len(faces[0].Indices) == 3, fmt.Sprintf("Face doesn't have 3 indices. Index count: %v\n", len(faces[0].Indices)))
+
+	uints := make([]uint32, len(faces)*3)
+	for i := 0; i < len(faces); i++ {
+		uints[i*3+0] = uint32(faces[i].Indices[0])
+		uints[i*3+1] = uint32(faces[i].Indices[1])
+		uints[i*3+2] = uint32(faces[i].Indices[2])
+	}
+
+	return uints
+}
+
 func loadBuffers() {
 
-	vertices := []float32{
-		-0.5, 0.5, 0,
-		0.5, 0.5, 0,
-		0.5, -0.5, 0,
-		-0.5, -0.5, 0,
-	}
-	// colors := []float32{
-	// 	1, 0, 0,
-	// 	0, 0, 1,
-	// 	0, 0, 1,
-	// 	0, 0, 1,
-	// }
-	indices := []uint32{0, 1, 3, 1, 2, 3}
-
-	//Load obj
-	objInfo, err := models.LoadObj("./res/models/obj.obj")
+	scene, release, err := asig.ImportFile("./res/models/color-cube.fbx", asig.PostProcessTriangulate)
 	if err != nil {
-		panic(err)
+		logging.ErrLog.Panicln("Failed to load model. Err: " + err.Error())
 	}
-	// logging.InfoLog.Printf("%v", objInfo.TriIndices)
-
-	vertices = objInfo.VertPos
-	indices = objInfo.TriIndices
+	release()
 
 	bo = buffers.NewBufferObject()
-	bo.GenBuffer(vertices, buffers.BufUsageStatic, buffers.BufTypeVertPos, buffers.DataTypeVec3)
-	// bo.GenBuffer(colors, buffers.BufUsageStatic, buffers.BufTypeColor, buffers.DataTypeVec3)
-	bo.GenBufferUint32(indices, buffers.BufUsageStatic, buffers.BufTypeIndex, buffers.DataTypeUint32)
+	bo.GenBuffer(flattenVec3(scene.Meshes[0].Vertices), buffers.BufUsageStatic, buffers.BufTypeVertPos, buffers.DataTypeVec3)
+	bo.GenBuffer(flattenVec3(scene.Meshes[0].Normals), buffers.BufUsageStatic, buffers.BufTypeNormal, buffers.DataTypeVec3)
+	bo.GenBuffer(flattenVec4(scene.Meshes[0].ColorSets[0]), buffers.BufUsageStatic, buffers.BufTypeColor, buffers.DataTypeVec4)
+	bo.GenBufferUint32(flattenFaces(scene.Meshes[0].Faces), buffers.BufUsageStatic, buffers.BufTypeIndex, buffers.DataTypeUint32)
 }
 
 func initImGUI() {
@@ -380,8 +412,11 @@ func handleWindowResize(newWinWidth, newWinHeight int32) {
 var time uint64 = 0
 var name string = ""
 
-var ambientColor gglm.Vec3
+var ambientColor gglm.Vec3 = *gglm.NewVec3(1, 1, 1)
 var ambientColorStrength float32 = 1
+
+var lightPos1 gglm.Vec3 = *gglm.NewVec3(2, 2, 0)
+var lightColor1 gglm.Vec3 = *gglm.NewVec3(1, 1, 1)
 
 func runGameLogic() {
 
@@ -426,6 +461,14 @@ func runGameLogic() {
 
 	if imgui.SliderFloat("Ambient Color Strength", &ambientColorStrength, 0, 1) {
 		simpleShader.SetUnifFloat32("ambientStrength", ambientColorStrength)
+	}
+
+	if imgui.SliderFloat3("Light Pos 1", &lightPos1.Data, -10, 10) {
+		simpleShader.SetUnifVec3("lightPos1", &lightPos1)
+	}
+
+	if imgui.SliderFloat3("Light Color 1", &lightColor1.Data, 0, 1) {
+		simpleShader.SetUnifVec3("lightColor1", &lightColor1)
 	}
 
 	imgui.Render()
