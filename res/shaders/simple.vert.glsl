@@ -16,7 +16,7 @@ uniform mat4 projMat;
 void main()
 {
     vertColor = vertColorIn;
-    vertNormal = vertNormalIn;
+    vertNormal = mat3(transpose(inverse(modelMat))) * vertNormalIn;
     fragPos = vec3(modelMat * vec4(vertPosIn, 1.0));
 
     gl_Position = projMat * viewMat * modelMat * vec4(vertPosIn, 1.0);

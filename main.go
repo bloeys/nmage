@@ -17,11 +17,15 @@ import (
 )
 
 //TODO:
+//Timing and deltatime
+//Make a window/engine class
+//Mesh class
 //Abstract UI
-//Asset loading
+//Textures
+//Proper Asset loading
 //Rework buffers package
 //Interleaved or packed buffers (xyzxyzxyz OR xxxyyyzzz)
-//Timing and deltatime
+//Audio
 
 type ImguiInfo struct {
 	imCtx *imgui.Context
@@ -47,6 +51,9 @@ var (
 	projMat  = &gglm.Mat4{}
 
 	imguiInfo *ImguiInfo
+
+	camPos     = gglm.NewVec3(0, 0, 10)
+	camForward = gglm.NewVec3(0, 0, 1)
 )
 
 func main() {
@@ -98,10 +105,8 @@ func main() {
 	simpleShader.SetUnifMat4("modelMat", &modelMat.Mat4)
 
 	//Moves objects into the cameras view
-	camPos := gglm.NewVec3(0, 0, 10)
-	targetPos := gglm.NewVec3(0, 0, 0)
-	viewMat := gglm.LookAt(camPos, targetPos, gglm.NewVec3(0, 1, 0))
-	simpleShader.SetUnifMat4("viewMat", &viewMat.Mat4)
+	camPos = gglm.NewVec3(0, 0, 10)
+	updateViewMat()
 
 	//Perspective/Depth
 	projMat := gglm.Perspective(45*gglm.Deg2Rad, float32(winWidth)/float32(winHeight), 0.1, 20)
@@ -122,12 +127,20 @@ func main() {
 	}
 }
 
+func updateViewMat() {
+	targetPos := gglm.NewVec3(0, 0, 0)
+	viewMat := gglm.LookAt(camPos, targetPos, gglm.NewVec3(0, 1, 0))
+	simpleShader.SetUnifMat4("viewMat", &viewMat.Mat4)
+}
+
 func initSDL() error {
 
 	err := sdl.Init(sdl.INIT_EVERYTHING)
 	if err != nil {
 		return err
 	}
+
+	sdl.ShowCursor(1)
 
 	sdl.GLSetAttribute(sdl.MAJOR_VERSION, 4)
 	sdl.GLSetAttribute(sdl.MINOR_VERSION, 1)
@@ -151,6 +164,12 @@ func initOpenGL() error {
 	if err := gl.Init(); err != nil {
 		return err
 	}
+
+	gl.Enable(gl.DEPTH_TEST)
+
+	gl.Enable(gl.CULL_FACE)
+	gl.CullFace(gl.BACK)
+	gl.FrontFace(gl.CCW)
 
 	gl.ClearColor(0, 0, 0, 1)
 	return nil
@@ -240,6 +259,7 @@ func flattenFaces(faces []asig.Face) []uint32 {
 
 func loadBuffers() {
 
+	// scene, release, err := asig.ImportFile("./res/models/weird-cube.fbx", asig.PostProcessTriangulate)
 	scene, release, err := asig.ImportFile("./res/models/color-cube.fbx", asig.PostProcessTriangulate)
 	if err != nil {
 		logging.ErrLog.Panicln("Failed to load model. Err: " + err.Error())
@@ -357,6 +377,9 @@ func handleInputs() {
 		case *sdl.MouseButtonEvent:
 			input.HandleMouseEvent(e)
 
+		case *sdl.MouseMotionEvent:
+			input.HandleMouseMotion(e)
+
 		case *sdl.WindowEvent:
 
 			//NOTE: SDL is not firing window resize, but is resizing the window by itself
@@ -421,16 +444,20 @@ var lightColor1 gglm.Vec3 = *gglm.NewVec3(1, 1, 1)
 func runGameLogic() {
 
 	if input.KeyDown(sdl.K_w) {
-		modelMat.Translate(gglm.NewVec3(0, 0, -0.1))
+		camPos.Data[1] += -0.1
+		updateViewMat()
 	}
 	if input.KeyDown(sdl.K_s) {
-		modelMat.Translate(gglm.NewVec3(0, 0, 0.1))
+		camPos.Data[1] += 0.1
+		updateViewMat()
 	}
 	if input.KeyDown(sdl.K_d) {
-		modelMat.Translate(gglm.NewVec3(0.1, 0, 0))
+		camPos.Data[0] += 0.1
+		updateViewMat()
 	}
 	if input.KeyDown(sdl.K_a) {
-		modelMat.Translate(gglm.NewVec3(-0.1, 0, 00))
+		camPos.Data[0] += -0.1
+		updateViewMat()
 	}
 
 	simpleShader.SetUnifMat4("modelMat", &modelMat.Mat4)
@@ -450,10 +477,6 @@ func runGameLogic() {
 	time = currentTime
 
 	imgui.NewFrame()
-	if imgui.Button("Click Me!") {
-		logging.InfoLog.Println("Clicked!")
-	}
-	imgui.InputText("Name", &name)
 
 	if imgui.SliderFloat3("Ambient Color", &ambientColor.Data, 0, 1) {
 		simpleShader.SetUnifVec3("ambientLightColor", &ambientColor)
@@ -471,19 +494,25 @@ func runGameLogic() {
 		simpleShader.SetUnifVec3("lightColor1", &lightColor1)
 	}
 
+	if imgui.SliderFloat3("Cam pos", &camPos.Data, -10, 10) {
+		updateViewMat()
+	}
+
 	imgui.Render()
 }
 
 func draw() {
 
 	gl.Disable(gl.SCISSOR_TEST)
-	gl.Clear(gl.COLOR_BUFFER_BIT)
+	gl.Enable(gl.CULL_FACE)
+	gl.Enable(gl.DEPTH_TEST)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 	simpleShader.Activate()
 
 	//DRAW
 	bo.Activate()
-	gl.DrawElements(gl.TRIANGLES, 36, gl.UNSIGNED_INT, gl.PtrOffset(0))
+	gl.DrawElements(gl.TRIANGLES, 60, gl.UNSIGNED_INT, gl.PtrOffset(0))
 	bo.Deactivate()
 
 	drawUI()

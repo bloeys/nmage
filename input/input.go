@@ -18,9 +18,17 @@ type mouseBtnState struct {
 	IsDoubleClicked     bool
 }
 
+type mouseMotionState struct {
+	XDelta int32
+	YDelta int32
+	XPos   int32
+	YPos   int32
+}
+
 var (
 	keyMap      = make(map[sdl.Keycode]*keyState)
 	mouseBtnMap = make(map[int]*mouseBtnState)
+	mouseMotion = mouseMotionState{}
 )
 
 func EventLoopStart() {
@@ -35,6 +43,9 @@ func EventLoopStart() {
 		v.IsReleasedThisFrame = false
 		v.IsDoubleClicked = false
 	}
+
+	mouseMotion.XDelta = 0
+	mouseMotion.YDelta = 0
 }
 
 func HandleKeyboardEvent(e *sdl.KeyboardEvent) {
@@ -59,10 +70,46 @@ func HandleMouseEvent(e *sdl.MouseButtonEvent) {
 	}
 
 	mb.State = int(e.State)
-
 	mb.IsDoubleClicked = e.Clicks == 2 && e.State == sdl.PRESSED
 	mb.IsPressedThisFrame = e.State == sdl.PRESSED
 	mb.IsReleasedThisFrame = e.State == sdl.RELEASED
+}
+
+func HandleMouseMotion(e *sdl.MouseMotionEvent) {
+
+	mouseMotion.XPos = e.X
+	mouseMotion.YPos = e.Y
+
+	mouseMotion.XDelta = e.XRel
+	mouseMotion.YDelta = e.YRel
+}
+
+//GetMousePos returns the window coordinates of the mouse
+func GetMousePos() (x, y int32) {
+	return mouseMotion.XPos, mouseMotion.YPos
+}
+
+//GetMouseMotion returns how many pixels were moved last frame
+func GetMouseMotion() (xDelta, yDelta int32) {
+	return mouseMotion.XDelta, mouseMotion.YDelta
+}
+
+func GetMouseMotionNorm() (xDelta, yDelta int32) {
+
+	x, y := mouseMotion.XDelta, mouseMotion.YDelta
+	if x > 0 {
+		x = 1
+	} else if x < 0 {
+		x = -1
+	}
+
+	if y > 0 {
+		y = -1
+	} else if y < 0 {
+		y = 1
+	}
+
+	return x, y
 }
 
 func KeyClicked(kc sdl.Keycode) bool {
