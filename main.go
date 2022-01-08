@@ -11,15 +11,16 @@ import (
 	"github.com/bloeys/nmage/input"
 	"github.com/bloeys/nmage/logging"
 	"github.com/bloeys/nmage/shaders"
+	"github.com/bloeys/nmage/timing"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
 //TODO:
-//Timing and deltatime
 //Make a window/engine class
 //Mesh class
+//Object
 //Abstract UI
 //Textures
 //Proper Asset loading
@@ -117,13 +118,18 @@ func main() {
 	simpleShader.SetUnifVec3("lightColor1", &lightColor1)
 
 	//Game loop
+	timing.Init()
 	for isRunning {
+
+		timing.FrameStarted()
 
 		handleInputs()
 		runGameLogic()
 		draw()
 
-		sdl.Delay(17)
+		timing.FrameEnded()
+
+		window.SetTitle(fmt.Sprintf("FPS: %.0f; Elapsed: %v", 1/timing.DT(), timing.ElapsedTime()))
 	}
 }
 
