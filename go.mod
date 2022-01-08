@@ -1,4 +1,4 @@
-module github.com/bloeys/go-sdl-engine
+module github.com/bloeys/nmage
 
 go 1.17
 

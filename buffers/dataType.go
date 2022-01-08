@@ -1,7 +1,7 @@
 package buffers
 
 import (
-	"github.com/bloeys/go-sdl-engine/logging"
+	"github.com/bloeys/nmage/logging"
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 

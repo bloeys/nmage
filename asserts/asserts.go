@@ -1,8 +1,8 @@
 package asserts
 
 import (
-	"github.com/bloeys/go-sdl-engine/consts"
-	"github.com/bloeys/go-sdl-engine/logging"
+	"github.com/bloeys/nmage/consts"
+	"github.com/bloeys/nmage/logging"
 )
 
 func True(check bool, msg string) {
