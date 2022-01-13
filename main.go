@@ -83,6 +83,9 @@ func main() {
 		logging.ErrLog.Fatalln(err)
 	}
 
+	//Set vsync
+	sdl.GLSetSwapInterval(0)
+
 	loadShaders()
 	loadBuffers()
 	initImGUI()
@@ -125,6 +128,7 @@ func main() {
 
 		handleInputs()
 		runGameLogic()
+
 		draw()
 
 		timing.FrameEnded()
@@ -442,7 +446,7 @@ var time uint64 = 0
 var name string = ""
 
 var ambientColor gglm.Vec3 = *gglm.NewVec3(1, 1, 1)
-var ambientColorStrength float32 = 1
+var ambientColorStrength float32 = 0.1
 
 var lightPos1 gglm.Vec3 = *gglm.NewVec3(2, 2, 0)
 var lightColor1 gglm.Vec3 = *gglm.NewVec3(1, 1, 1)
