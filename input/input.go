@@ -25,10 +25,16 @@ type mouseMotionState struct {
 	YPos   int32
 }
 
+type mouseWheelState struct {
+	XDelta int32
+	YDelta int32
+}
+
 var (
 	keyMap      = make(map[sdl.Keycode]*keyState)
 	mouseBtnMap = make(map[int]*mouseBtnState)
 	mouseMotion = mouseMotionState{}
+	mouseWheel  = mouseWheelState{}
 )
 
 func EventLoopStart() {
@@ -46,6 +52,9 @@ func EventLoopStart() {
 
 	mouseMotion.XDelta = 0
 	mouseMotion.YDelta = 0
+
+	mouseWheel.XDelta = 0
+	mouseWheel.YDelta = 0
 }
 
 func HandleKeyboardEvent(e *sdl.KeyboardEvent) {
@@ -61,7 +70,7 @@ func HandleKeyboardEvent(e *sdl.KeyboardEvent) {
 	ks.IsReleasedThisFrame = e.State == sdl.RELEASED && e.Repeat == 0
 }
 
-func HandleMouseEvent(e *sdl.MouseButtonEvent) {
+func HandleMouseBtnEvent(e *sdl.MouseButtonEvent) {
 
 	mb := mouseBtnMap[int(e.Button)]
 	if mb == nil {
@@ -75,13 +84,18 @@ func HandleMouseEvent(e *sdl.MouseButtonEvent) {
 	mb.IsReleasedThisFrame = e.State == sdl.RELEASED
 }
 
-func HandleMouseMotion(e *sdl.MouseMotionEvent) {
+func HandleMouseMotionEvent(e *sdl.MouseMotionEvent) {
 
 	mouseMotion.XPos = e.X
 	mouseMotion.YPos = e.Y
 
 	mouseMotion.XDelta = e.XRel
 	mouseMotion.YDelta = e.YRel
+}
+
+func HandleMouseWheelEvent(e *sdl.MouseWheelEvent) {
+	mouseWheel.XDelta = e.X
+	mouseWheel.YDelta = e.Y
 }
 
 //GetMousePos returns the window coordinates of the mouse
@@ -110,6 +124,34 @@ func GetMouseMotionNorm() (xDelta, yDelta int32) {
 	}
 
 	return x, y
+}
+
+func GetMouseWheelMotion() (xDelta, yDelta int32) {
+	return mouseWheel.XDelta, mouseWheel.YDelta
+}
+
+//GetMouseWheelXNorm returns 1 if mouse wheel xDelta > 0, -1 if xDelta < 0, and 0 otherwise
+func GetMouseWheelXNorm() int32 {
+
+	if mouseWheel.XDelta > 0 {
+		return 1
+	} else if mouseWheel.XDelta < 0 {
+		return -1
+	}
+
+	return 0
+}
+
+//returns 1 if mouse wheel yDelta > 0, -1 if yDelta < 0, and 0 otherwise
+func GetMouseWheelYNorm() int32 {
+
+	if mouseWheel.YDelta > 0 {
+		return 1
+	} else if mouseWheel.YDelta < 0 {
+		return -1
+	}
+
+	return 0
 }
 
 func KeyClicked(kc sdl.Keycode) bool {

@@ -58,6 +58,9 @@ type Buffer struct {
 	Type   BufType
 	GLType BufGLType
 	DataTypeInfo
+
+	//DataLen is the number of elements in the uploaded to the buffer
+	DataLen int32
 }
 
 func (b *Buffer) Activate() {
@@ -92,6 +95,7 @@ func (bo *BufferObject) GenBuffer(data []float32, bufUsage BufUsage, bufType Buf
 		Type:         bufType,
 		GLType:       bufType.GetBufferGLType(),
 		DataTypeInfo: GetDataTypeInfo(bufDataType),
+		DataLen:      int32(len(data)),
 	}
 	bo.SetBuffer(buf)
 
@@ -120,6 +124,7 @@ func (bo *BufferObject) GenBufferUint32(data []uint32, bufUsage BufUsage, bufTyp
 		Type:         bufType,
 		GLType:       bufType.GetBufferGLType(),
 		DataTypeInfo: GetDataTypeInfo(bufDataType),
+		DataLen:      int32(len(data)),
 	}
 	bo.SetBuffer(buf)
 

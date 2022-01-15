@@ -53,7 +53,7 @@ var (
 
 	imguiInfo *ImguiInfo
 
-	camPos     = gglm.NewVec3(0, 0, 10)
+	camPos     = gglm.NewVec3(0, 0, -10)
 	camForward = gglm.NewVec3(0, 0, 1)
 )
 
@@ -109,11 +109,10 @@ func main() {
 	simpleShader.SetUnifMat4("modelMat", &modelMat.Mat4)
 
 	//Moves objects into the cameras view
-	camPos = gglm.NewVec3(0, 0, 10)
 	updateViewMat()
 
 	//Perspective/Depth
-	projMat := gglm.Perspective(45*gglm.Deg2Rad, float32(winWidth)/float32(winHeight), 0.1, 20)
+	projMat := gglm.Perspective(45*gglm.Deg2Rad, float32(winWidth)/float32(winHeight), 0.1, 500)
 	simpleShader.SetUnifMat4("projMat", projMat)
 
 	//Lights
@@ -138,7 +137,7 @@ func main() {
 }
 
 func updateViewMat() {
-	targetPos := gglm.NewVec3(0, 0, 0)
+	targetPos := camPos.Clone().Add(camForward)
 	viewMat := gglm.LookAt(camPos, targetPos, gglm.NewVec3(0, 1, 0))
 	simpleShader.SetUnifMat4("viewMat", &viewMat.Mat4)
 }
@@ -349,6 +348,7 @@ func initImGUI() {
 
 func handleInputs() {
 
+	input.EventLoopStart()
 	imIO := imgui.CurrentIO()
 
 	for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -357,20 +357,10 @@ func handleInputs() {
 
 		case *sdl.MouseWheelEvent:
 
-			var deltaX, deltaY float32
-			if e.X > 0 {
-				deltaX++
-			} else if e.X < 0 {
-				deltaX--
-			}
+			input.HandleMouseWheelEvent(e)
 
-			if e.Y > 0 {
-				deltaY++
-			} else if e.Y < 0 {
-				deltaY--
-			}
-
-			imIO.AddMouseWheelDelta(deltaX, deltaY)
+			xDelta, yDelta := input.GetMouseWheelMotion()
+			imIO.AddMouseWheelDelta(float32(xDelta), float32(yDelta))
 
 		case *sdl.KeyboardEvent:
 			input.HandleKeyboardEvent(e)
@@ -385,10 +375,10 @@ func handleInputs() {
 			imIO.AddInputCharacters(string(e.Text[:]))
 
 		case *sdl.MouseButtonEvent:
-			input.HandleMouseEvent(e)
+			input.HandleMouseBtnEvent(e)
 
 		case *sdl.MouseMotionEvent:
-			input.HandleMouseMotion(e)
+			input.HandleMouseMotionEvent(e)
 
 		case *sdl.WindowEvent:
 
@@ -454,11 +444,11 @@ var lightColor1 gglm.Vec3 = *gglm.NewVec3(1, 1, 1)
 func runGameLogic() {
 
 	if input.KeyDown(sdl.K_w) {
-		camPos.Data[1] += -0.1
+		camPos.Data[1] += 0.1
 		updateViewMat()
 	}
 	if input.KeyDown(sdl.K_s) {
-		camPos.Data[1] += 0.1
+		camPos.Data[1] -= 0.1
 		updateViewMat()
 	}
 	if input.KeyDown(sdl.K_d) {
@@ -466,10 +456,19 @@ func runGameLogic() {
 		updateViewMat()
 	}
 	if input.KeyDown(sdl.K_a) {
-		camPos.Data[0] += -0.1
+		camPos.Data[0] -= 0.1
 		updateViewMat()
 	}
 
+	if input.GetMouseWheelYNorm() > 0 {
+		camPos.Data[2] += 1
+		updateViewMat()
+	} else if input.GetMouseWheelYNorm() < 0 {
+		camPos.Data[2] -= 1
+		updateViewMat()
+	}
+
+	modelMat.Rotate(10*timing.DT()*gglm.Deg2Rad, gglm.NewVec3(1, 1, 1).Normalize())
 	simpleShader.SetUnifMat4("modelMat", &modelMat.Mat4)
 
 	//ImGUI
@@ -504,10 +503,6 @@ func runGameLogic() {
 		simpleShader.SetUnifVec3("lightColor1", &lightColor1)
 	}
 
-	if imgui.SliderFloat3("Cam pos", &camPos.Data, -10, 10) {
-		updateViewMat()
-	}
-
 	imgui.Render()
 }
 
@@ -522,7 +517,17 @@ func draw() {
 
 	//DRAW
 	bo.Activate()
-	gl.DrawElements(gl.TRIANGLES, 60, gl.UNSIGNED_INT, gl.PtrOffset(0))
+	tempModelMat := modelMat.Clone()
+
+	for y := 0; y < 100; y++ {
+		for x := 0; x < 100; x++ {
+			simpleShader.SetUnifMat4("modelMat", &tempModelMat.Translate(gglm.NewVec3(-1, 0, 0)).Mat4)
+			gl.DrawElements(gl.TRIANGLES, int32(bo.IndexBuf.DataLen), gl.UNSIGNED_INT, gl.PtrOffset(0))
+		}
+		simpleShader.SetUnifMat4("modelMat", &tempModelMat.Translate(gglm.NewVec3(100, -1, 0)).Mat4)
+	}
+
+	simpleShader.SetUnifMat4("modelMat", &modelMat.Mat4)
 	bo.Deactivate()
 
 	drawUI()
