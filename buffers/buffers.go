@@ -153,11 +153,11 @@ func (bo *BufferObject) SetBuffer(buf *Buffer) {
 	}
 }
 
-func (bo *BufferObject) Activate() {
+func (bo *BufferObject) Bind() {
 	gl.BindVertexArray(bo.VAOID)
 }
 
-func (bo *BufferObject) Deactivate() {
+func (bo *BufferObject) UnBind() {
 	gl.BindVertexArray(0)
 }
 

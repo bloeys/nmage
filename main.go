@@ -6,27 +6,30 @@ import (
 
 	"github.com/bloeys/assimp-go/asig"
 	"github.com/bloeys/gglm/gglm"
-	"github.com/bloeys/nmage/asserts"
-	"github.com/bloeys/nmage/buffers"
+	"github.com/bloeys/nmage/engine"
 	"github.com/bloeys/nmage/input"
 	"github.com/bloeys/nmage/logging"
-	"github.com/bloeys/nmage/shaders"
+	"github.com/bloeys/nmage/materials"
+	"github.com/bloeys/nmage/meshes"
 	"github.com/bloeys/nmage/timing"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-//TODO:
-//Make a window/engine class
-//Mesh class
+//TODO: Tasks:
+//Engine loop
+//Proper rendering setup
+//Flesh out the material system
 //Object
 //Abstract UI
 //Textures
-//Proper Asset loading
-//Rework buffers package
-//Interleaved or packed buffers (xyzxyzxyz OR xxxyyyzzz)
 //Audio
+
+//Low Priority:
+//	Proper Asset loading
+//	Rework buffers package
+//	Interleaved or packed buffers (xyzxyzxyz OR xxxyyyzzz)
 
 type ImguiInfo struct {
 	imCtx *imgui.Context
@@ -42,11 +45,11 @@ var (
 	winHeight int32 = 720
 
 	isRunning bool = true
-	window    *sdl.Window
+	window    *engine.Window
 
-	simpleShader shaders.ShaderProgram
-	imShader     shaders.ShaderProgram
-	bo           *buffers.BufferObject
+	simpleMat *materials.Material
+	imguiMat  *materials.Material
+	cubeMesh  *meshes.Mesh
 
 	modelMat = gglm.NewTrMatId()
 	projMat  = &gglm.Mat4{}
@@ -61,44 +64,42 @@ func main() {
 
 	runtime.LockOSThread()
 
-	err := initSDL()
+	//Init engine
+	err := engine.Init()
 	if err != nil {
-		logging.ErrLog.Fatalln("Failed to init SDL. Err:", err)
+		logging.ErrLog.Fatalln("Failed to init nMage. Err:", err)
 	}
 
-	window, err = sdl.CreateWindow("Go SDL Engine", sdl.WINDOWPOS_CENTERED, sdl.WINDOWPOS_CENTERED, winWidth, winHeight, sdl.WINDOW_OPENGL|sdl.WINDOW_RESIZABLE)
+	//Create window
+	window, err = engine.CreateOpenGLWindowCentered("nMage", winWidth, winHeight, engine.WindowFlags_RESIZABLE)
 	if err != nil {
 		logging.ErrLog.Fatalln("Failed to create window. Err: ", err)
 	}
 	defer window.Destroy()
 
-	glCtx, err := window.GLCreateContext()
+	engine.SetVSync(false)
+
+	//Create materials
+	simpleMat = materials.NewMaterial("Simple Mat", "./res/shaders/simple")
+	imguiMat = materials.NewMaterial("ImGUI Mat", "./res/shaders/imgui")
+
+	//Load meshes
+	cubeMesh, err = meshes.NewMesh("Cube", "./res/models/color-cube.fbx", asig.PostProcess(0))
 	if err != nil {
-		logging.ErrLog.Fatalln("Failed to create OpenGL context. Err: ", err)
-	}
-	defer sdl.GLDeleteContext(glCtx)
-
-	err = initOpenGL()
-	if err != nil {
-		logging.ErrLog.Fatalln(err)
+		logging.ErrLog.Fatalln("Failed to load cube mesh. Err: ", err)
 	}
 
-	//Set vsync
-	sdl.GLSetSwapInterval(0)
-
-	loadShaders()
-	loadBuffers()
 	initImGUI()
 
 	//Enable vertex attributes
-	simpleShader.SetAttribute("vertPosIn", bo, bo.VertPosBuf)
-	simpleShader.EnableAttribute("vertPosIn")
+	simpleMat.SetAttribute("vertPosIn", cubeMesh.BufObj, cubeMesh.BufObj.VertPosBuf)
+	simpleMat.EnableAttribute("vertPosIn")
 
-	simpleShader.SetAttribute("vertColorIn", bo, bo.ColorBuf)
-	simpleShader.EnableAttribute("vertColorIn")
+	simpleMat.SetAttribute("vertColorIn", cubeMesh.BufObj, cubeMesh.BufObj.ColorBuf)
+	simpleMat.EnableAttribute("vertColorIn")
 
-	simpleShader.SetAttribute("vertNormalIn", bo, bo.NormalBuf)
-	simpleShader.EnableAttribute("vertNormalIn")
+	simpleMat.SetAttribute("vertNormalIn", cubeMesh.BufObj, cubeMesh.BufObj.NormalBuf)
+	simpleMat.EnableAttribute("vertNormalIn")
 
 	//Movement, scale and rotation
 	translationMat := gglm.NewTranslationMat(gglm.NewVec3(0, 0, 0))
@@ -106,21 +107,20 @@ func main() {
 	rotMat := gglm.NewRotMat(gglm.NewQuatEuler(gglm.NewVec3(0, 0, 0).AsRad()))
 
 	modelMat.Mul(translationMat.Mul(rotMat.Mul(scaleMat)))
-	simpleShader.SetUnifMat4("modelMat", &modelMat.Mat4)
+	simpleMat.SetUnifMat4("modelMat", &modelMat.Mat4)
 
 	//Moves objects into the cameras view
 	updateViewMat()
 
 	//Perspective/Depth
 	projMat := gglm.Perspective(45*gglm.Deg2Rad, float32(winWidth)/float32(winHeight), 0.1, 500)
-	simpleShader.SetUnifMat4("projMat", projMat)
+	simpleMat.SetUnifMat4("projMat", projMat)
 
 	//Lights
-	simpleShader.SetUnifVec3("lightPos1", &lightPos1)
-	simpleShader.SetUnifVec3("lightColor1", &lightColor1)
+	simpleMat.SetUnifVec3("lightPos1", &lightPos1)
+	simpleMat.SetUnifVec3("lightColor1", &lightColor1)
 
 	//Game loop
-	timing.Init()
 	for isRunning {
 
 		timing.FrameStarted()
@@ -132,154 +132,14 @@ func main() {
 
 		timing.FrameEnded()
 
-		window.SetTitle(fmt.Sprintf("FPS: %.0f; Elapsed: %v", 1/timing.DT(), timing.ElapsedTime()))
+		window.SDLWin.SetTitle(fmt.Sprintf("FPS: %.0f; Elapsed: %v", 1/timing.DT(), timing.ElapsedTime()))
 	}
 }
 
 func updateViewMat() {
 	targetPos := camPos.Clone().Add(camForward)
 	viewMat := gglm.LookAt(camPos, targetPos, gglm.NewVec3(0, 1, 0))
-	simpleShader.SetUnifMat4("viewMat", &viewMat.Mat4)
-}
-
-func initSDL() error {
-
-	err := sdl.Init(sdl.INIT_EVERYTHING)
-	if err != nil {
-		return err
-	}
-
-	sdl.ShowCursor(1)
-
-	sdl.GLSetAttribute(sdl.MAJOR_VERSION, 4)
-	sdl.GLSetAttribute(sdl.MINOR_VERSION, 1)
-
-	// R(0-255) G(0-255) B(0-255)
-	sdl.GLSetAttribute(sdl.GL_RED_SIZE, 8)
-	sdl.GLSetAttribute(sdl.GL_GREEN_SIZE, 8)
-	sdl.GLSetAttribute(sdl.GL_BLUE_SIZE, 8)
-
-	sdl.GLSetAttribute(sdl.GL_DOUBLEBUFFER, 1)
-	sdl.GLSetAttribute(sdl.GL_DEPTH_SIZE, 24)
-	sdl.GLSetAttribute(sdl.GL_STENCIL_SIZE, 8)
-
-	sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_CORE)
-
-	return nil
-}
-
-func initOpenGL() error {
-
-	if err := gl.Init(); err != nil {
-		return err
-	}
-
-	gl.Enable(gl.DEPTH_TEST)
-
-	gl.Enable(gl.CULL_FACE)
-	gl.CullFace(gl.BACK)
-	gl.FrontFace(gl.CCW)
-
-	gl.ClearColor(0, 0, 0, 1)
-	return nil
-}
-
-func loadShaders() {
-
-	var err error
-	simpleShader, err = shaders.NewShaderProgram()
-	if err != nil {
-		logging.ErrLog.Fatalln("Failed to create new shader program. Err: ", err)
-	}
-
-	vertShader, err := shaders.LoadAndCompilerShader("./res/shaders/simple.vert.glsl", shaders.VertexShaderType)
-	if err != nil {
-		logging.ErrLog.Fatalln("Failed to create new shader. Err: ", err)
-	}
-
-	fragShader, err := shaders.LoadAndCompilerShader("./res/shaders/simple.frag.glsl", shaders.FragmentShaderType)
-	if err != nil {
-		logging.ErrLog.Fatalln("Failed to create new shader. Err: ", err)
-	}
-
-	simpleShader.AttachShader(vertShader)
-	simpleShader.AttachShader(fragShader)
-	simpleShader.Link()
-
-	//ImGUI shader
-	imShader, err = shaders.NewShaderProgram()
-	if err != nil {
-		logging.ErrLog.Fatalln("Failed to create new shader program. Err: ", err)
-	}
-
-	imguiVertShader, err := shaders.LoadAndCompilerShader("./res/shaders/imgui.vert.glsl", shaders.VertexShaderType)
-	if err != nil {
-		logging.ErrLog.Fatalln("Failed to create new shader. Err: ", err)
-	}
-
-	imguiFragShader, err := shaders.LoadAndCompilerShader("./res/shaders/imgui.frag.glsl", shaders.FragmentShaderType)
-	if err != nil {
-		logging.ErrLog.Fatalln("Failed to create new shader. Err: ", err)
-	}
-
-	imShader.AttachShader(imguiVertShader)
-	imShader.AttachShader(imguiFragShader)
-	imShader.Link()
-}
-
-func flattenVec3(vec3s []gglm.Vec3) []float32 {
-
-	floats := make([]float32, len(vec3s)*3)
-	for i := 0; i < len(vec3s); i++ {
-		floats[i*3+0] = vec3s[i].X()
-		floats[i*3+1] = vec3s[i].Y()
-		floats[i*3+2] = vec3s[i].Z()
-	}
-
-	return floats
-}
-
-func flattenVec4(vec4s []gglm.Vec4) []float32 {
-
-	floats := make([]float32, len(vec4s)*4)
-	for i := 0; i < len(vec4s); i++ {
-		floats[i*4+0] = vec4s[i].X()
-		floats[i*4+1] = vec4s[i].Y()
-		floats[i*4+2] = vec4s[i].Z()
-		floats[i*4+3] = vec4s[i].W()
-	}
-
-	return floats
-}
-
-func flattenFaces(faces []asig.Face) []uint32 {
-
-	asserts.True(len(faces[0].Indices) == 3, fmt.Sprintf("Face doesn't have 3 indices. Index count: %v\n", len(faces[0].Indices)))
-
-	uints := make([]uint32, len(faces)*3)
-	for i := 0; i < len(faces); i++ {
-		uints[i*3+0] = uint32(faces[i].Indices[0])
-		uints[i*3+1] = uint32(faces[i].Indices[1])
-		uints[i*3+2] = uint32(faces[i].Indices[2])
-	}
-
-	return uints
-}
-
-func loadBuffers() {
-
-	// scene, release, err := asig.ImportFile("./res/models/weird-cube.fbx", asig.PostProcessTriangulate)
-	scene, release, err := asig.ImportFile("./res/models/color-cube.fbx", asig.PostProcessTriangulate)
-	if err != nil {
-		logging.ErrLog.Panicln("Failed to load model. Err: " + err.Error())
-	}
-	release()
-
-	bo = buffers.NewBufferObject()
-	bo.GenBuffer(flattenVec3(scene.Meshes[0].Vertices), buffers.BufUsageStatic, buffers.BufTypeVertPos, buffers.DataTypeVec3)
-	bo.GenBuffer(flattenVec3(scene.Meshes[0].Normals), buffers.BufUsageStatic, buffers.BufTypeNormal, buffers.DataTypeVec3)
-	bo.GenBuffer(flattenVec4(scene.Meshes[0].ColorSets[0]), buffers.BufUsageStatic, buffers.BufTypeColor, buffers.DataTypeVec4)
-	bo.GenBufferUint32(flattenFaces(scene.Meshes[0].Faces), buffers.BufUsageStatic, buffers.BufTypeIndex, buffers.DataTypeUint32)
+	simpleMat.SetUnifMat4("viewMat", &viewMat.Mat4)
 }
 
 func initImGUI() {
@@ -309,11 +169,11 @@ func initImGUI() {
 	imIO.Fonts().SetTextureID(imgui.TextureID(imguiInfo.texID))
 
 	//Shader attributes
-	imShader.Activate()
-	imShader.EnableAttribute("Position")
-	imShader.EnableAttribute("UV")
-	imShader.EnableAttribute("Color")
-	imShader.Deactivate()
+	imguiMat.Bind()
+	imguiMat.EnableAttribute("Position")
+	imguiMat.EnableAttribute("UV")
+	imguiMat.EnableAttribute("Color")
+	imguiMat.UnBind()
 
 	//Init imgui input mapping
 	keys := map[int]int{
@@ -380,26 +240,12 @@ func handleInputs() {
 		case *sdl.MouseMotionEvent:
 			input.HandleMouseMotionEvent(e)
 
-		case *sdl.WindowEvent:
-
-			//NOTE: SDL is not firing window resize, but is resizing the window by itself
-			// if e.Type != sdl.WINDOWEVENT_SIZE_CHANGED {
-			// 	continue
-			// }
-
-			// winWidth = e.Data1
-			// winHeight = e.Data2
-			// window.SetSize(int32(winWidth), int32(winHeight))
-
-			// projMat = gglm.Perspective(45*gglm.Deg2Rad, float32(winWidth)/float32(winHeight), 0.1, 20)
-			// simpleShader.SetUnifMat4("projMat", projMat)
-
 		case *sdl.QuitEvent:
 			isRunning = false
 		}
 	}
 
-	currWinWidth, currWinHeight := window.GetSize()
+	currWinWidth, currWinHeight := window.SDLWin.GetSize()
 	if winWidth != currWinWidth || winHeight != currWinHeight {
 		handleWindowResize(currWinWidth, currWinHeight)
 	}
@@ -422,14 +268,14 @@ func handleWindowResize(newWinWidth, newWinHeight int32) {
 	winWidth = newWinWidth
 	winHeight = newWinHeight
 
-	fbWidth, fbHeight := window.GLGetDrawableSize()
+	fbWidth, fbHeight := window.SDLWin.GLGetDrawableSize()
 	if fbWidth <= 0 || fbHeight <= 0 {
 		return
 	}
 	gl.Viewport(0, 0, fbWidth, fbHeight)
 
 	projMat = gglm.Perspective(45*gglm.Deg2Rad, float32(winWidth)/float32(winHeight), 0.1, 20)
-	simpleShader.SetUnifMat4("projMat", projMat)
+	simpleMat.SetUnifMat4("projMat", projMat)
 }
 
 var time uint64 = 0
@@ -443,7 +289,7 @@ var lightColor1 gglm.Vec3 = *gglm.NewVec3(1, 1, 1)
 
 func runGameLogic() {
 
-	var camSpeed float32 = 15.0
+	var camSpeed float32 = 15
 	if input.KeyDown(sdl.K_w) {
 		camPos.Data[1] += camSpeed * timing.DT()
 		updateViewMat()
@@ -470,7 +316,7 @@ func runGameLogic() {
 	}
 
 	modelMat.Rotate(10*timing.DT()*gglm.Deg2Rad, gglm.NewVec3(1, 1, 1).Normalize())
-	simpleShader.SetUnifMat4("modelMat", &modelMat.Mat4)
+	simpleMat.SetUnifMat4("modelMat", &modelMat.Mat4)
 
 	//ImGUI
 	imIO := imgui.CurrentIO()
@@ -489,19 +335,19 @@ func runGameLogic() {
 	imgui.NewFrame()
 
 	if imgui.SliderFloat3("Ambient Color", &ambientColor.Data, 0, 1) {
-		simpleShader.SetUnifVec3("ambientLightColor", &ambientColor)
+		simpleMat.SetUnifVec3("ambientLightColor", &ambientColor)
 	}
 
 	if imgui.SliderFloat("Ambient Color Strength", &ambientColorStrength, 0, 1) {
-		simpleShader.SetUnifFloat32("ambientStrength", ambientColorStrength)
+		simpleMat.SetUnifFloat32("ambientStrength", ambientColorStrength)
 	}
 
 	if imgui.SliderFloat3("Light Pos 1", &lightPos1.Data, -10, 10) {
-		simpleShader.SetUnifVec3("lightPos1", &lightPos1)
+		simpleMat.SetUnifVec3("lightPos1", &lightPos1)
 	}
 
 	if imgui.SliderFloat3("Light Color 1", &lightColor1.Data, 0, 1) {
-		simpleShader.SetUnifVec3("lightColor1", &lightColor1)
+		simpleMat.SetUnifVec3("lightColor1", &lightColor1)
 	}
 
 	imgui.Render()
@@ -509,38 +355,37 @@ func runGameLogic() {
 
 func draw() {
 
-	gl.Disable(gl.SCISSOR_TEST)
-	gl.Enable(gl.CULL_FACE)
-	gl.Enable(gl.DEPTH_TEST)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	simpleMat.Bind()
 
-	simpleShader.Activate()
-
-	//DRAW
-	bo.Activate()
+	cubeMesh.BufObj.Bind()
 	tempModelMat := modelMat.Clone()
 
 	rowSize := 10
 	for y := 0; y < rowSize; y++ {
 		for x := 0; x < rowSize; x++ {
-			simpleShader.SetUnifMat4("modelMat", &tempModelMat.Translate(gglm.NewVec3(-1, 0, 0)).Mat4)
-			gl.DrawElements(gl.TRIANGLES, int32(bo.IndexBuf.DataLen), gl.UNSIGNED_INT, gl.PtrOffset(0))
+			simpleMat.SetUnifMat4("modelMat", &tempModelMat.Translate(gglm.NewVec3(-1, 0, 0)).Mat4)
+			gl.DrawElements(gl.TRIANGLES, int32(cubeMesh.BufObj.IndexBuf.DataLen), gl.UNSIGNED_INT, gl.PtrOffset(0))
 		}
-		simpleShader.SetUnifMat4("modelMat", &tempModelMat.Translate(gglm.NewVec3(float32(rowSize), -1, 0)).Mat4)
+		simpleMat.SetUnifMat4("modelMat", &tempModelMat.Translate(gglm.NewVec3(float32(rowSize), -1, 0)).Mat4)
 	}
 
-	simpleShader.SetUnifMat4("modelMat", &modelMat.Mat4)
-	bo.Deactivate()
+	simpleMat.SetUnifMat4("modelMat", &modelMat.Mat4)
+	cubeMesh.BufObj.UnBind()
 
 	drawUI()
+	window.SDLWin.GLSwap()
 
-	window.GLSwap()
+	//Reset imgui changes before next draw
+	gl.Disable(gl.SCISSOR_TEST)
+	gl.Enable(gl.CULL_FACE)
+	gl.Enable(gl.DEPTH_TEST)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
 func drawUI() {
 
 	// Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
-	fbWidth, fbHeight := window.GLGetDrawableSize()
+	fbWidth, fbHeight := window.SDLWin.GLGetDrawableSize()
 	if fbWidth <= 0 || fbHeight <= 0 {
 		return
 	}
@@ -564,13 +409,13 @@ func drawUI() {
 	// Our visible imgui space lies from draw_data->DisplayPos (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right).
 	// DisplayMin is typically (0,0) for single viewport apps.
 
-	imShader.Activate()
+	imguiMat.Bind()
 
-	gl.Uniform1i(gl.GetUniformLocation(imShader.ID, gl.Str("Texture\x00")), 0)
+	gl.Uniform1i(gl.GetUniformLocation(imguiMat.ShaderProg.ID, gl.Str("Texture\x00")), 0)
 
 	//PERF: only update the ortho matrix on window resize
 	orthoMat := gglm.Ortho(0, float32(winWidth), 0, float32(winHeight), 0, 20)
-	imShader.SetUnifMat4("ProjMtx", &orthoMat.Mat4)
+	imguiMat.SetUnifMat4("ProjMtx", &orthoMat.Mat4)
 	gl.BindSampler(0, 0) // Rely on combined texture/sampler state.
 
 	// Recreate the VAO every time
@@ -580,12 +425,12 @@ func drawUI() {
 	gl.BindBuffer(gl.ARRAY_BUFFER, imguiInfo.vboID)
 
 	vertexSize, vertexOffsetPos, vertexOffsetUv, vertexOffsetCol := imgui.VertexBufferLayout()
-	imShader.EnableAttribute("Position")
-	imShader.EnableAttribute("UV")
-	imShader.EnableAttribute("Color")
-	gl.VertexAttribPointerWithOffset(uint32(imShader.GetAttribLoc("Position")), 2, gl.FLOAT, false, int32(vertexSize), uintptr(vertexOffsetPos))
-	gl.VertexAttribPointerWithOffset(uint32(imShader.GetAttribLoc("UV")), 2, gl.FLOAT, false, int32(vertexSize), uintptr(vertexOffsetUv))
-	gl.VertexAttribPointerWithOffset(uint32(imShader.GetAttribLoc("Color")), 4, gl.UNSIGNED_BYTE, true, int32(vertexSize), uintptr(vertexOffsetCol))
+	imguiMat.EnableAttribute("Position")
+	imguiMat.EnableAttribute("UV")
+	imguiMat.EnableAttribute("Color")
+	gl.VertexAttribPointerWithOffset(uint32(imguiMat.GetAttribLoc("Position")), 2, gl.FLOAT, false, int32(vertexSize), uintptr(vertexOffsetPos))
+	gl.VertexAttribPointerWithOffset(uint32(imguiMat.GetAttribLoc("UV")), 2, gl.FLOAT, false, int32(vertexSize), uintptr(vertexOffsetUv))
+	gl.VertexAttribPointerWithOffset(uint32(imguiMat.GetAttribLoc("Color")), 4, gl.UNSIGNED_BYTE, true, int32(vertexSize), uintptr(vertexOffsetCol))
 
 	indexSize := imgui.IndexBufferLayout()
 	drawType := gl.UNSIGNED_SHORT
