@@ -17,8 +17,8 @@ To run the project you need:
 * A C/C++ compiler installed and in your path
   * Windows: [MingW](https://www.mingw-w64.org/downloads/#mingw-builds) or similar
   * Mac/Linux: Should be installed by default, but if not try [GCC](https://gcc.gnu.org/) or [Clang](https://releases.llvm.org/download.html)
-* Get the required [assimp-go](https://github.com/bloeys/assimp-go) DLLs/DyLibs and place them correctly by following the `assimp-go` [README](https://github.com/bloeys/assimp-go#using-assimp-go).
+* Get the required [assimp-go](https://github.com/bloeys/assimp-go) DLLs/DyLibs and place them correctly by following the assimp-go [README](https://github.com/bloeys/assimp-go#using-assimp-go).
 
-Then run nMage with `go run .`
+Then you can start nMage with `go run .`
 
-> Note: that it might take a while to run the first time because of downloading/compiling dependencies.
+> Note: It *might* take a while to clone/run the first time because of downloading/compiling dependencies.

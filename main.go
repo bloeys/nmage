@@ -443,20 +443,21 @@ var lightColor1 gglm.Vec3 = *gglm.NewVec3(1, 1, 1)
 
 func runGameLogic() {
 
+	var camSpeed float32 = 15.0
 	if input.KeyDown(sdl.K_w) {
-		camPos.Data[1] += 0.1
+		camPos.Data[1] += camSpeed * timing.DT()
 		updateViewMat()
 	}
 	if input.KeyDown(sdl.K_s) {
-		camPos.Data[1] -= 0.1
+		camPos.Data[1] -= camSpeed * timing.DT()
 		updateViewMat()
 	}
 	if input.KeyDown(sdl.K_d) {
-		camPos.Data[0] += 0.1
+		camPos.Data[0] += camSpeed * timing.DT()
 		updateViewMat()
 	}
 	if input.KeyDown(sdl.K_a) {
-		camPos.Data[0] -= 0.1
+		camPos.Data[0] -= camSpeed * timing.DT()
 		updateViewMat()
 	}
 
@@ -519,12 +520,13 @@ func draw() {
 	bo.Activate()
 	tempModelMat := modelMat.Clone()
 
-	for y := 0; y < 100; y++ {
-		for x := 0; x < 100; x++ {
+	rowSize := 10
+	for y := 0; y < rowSize; y++ {
+		for x := 0; x < rowSize; x++ {
 			simpleShader.SetUnifMat4("modelMat", &tempModelMat.Translate(gglm.NewVec3(-1, 0, 0)).Mat4)
 			gl.DrawElements(gl.TRIANGLES, int32(bo.IndexBuf.DataLen), gl.UNSIGNED_INT, gl.PtrOffset(0))
 		}
-		simpleShader.SetUnifMat4("modelMat", &tempModelMat.Translate(gglm.NewVec3(100, -1, 0)).Mat4)
+		simpleShader.SetUnifMat4("modelMat", &tempModelMat.Translate(gglm.NewVec3(float32(rowSize), -1, 0)).Mat4)
 	}
 
 	simpleShader.SetUnifMat4("modelMat", &modelMat.Mat4)

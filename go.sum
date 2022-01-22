@@ -2,6 +2,8 @@ github.com/bloeys/assimp-go v0.3.1 h1:GANPXH8ER/4B/XsxZOw03GLZi2qKiWapSJ9dntrGoi
 github.com/bloeys/assimp-go v0.3.1/go.mod h1:my3yRxT7CfOztmvi+0svmwbaqw0KFrxaHxncoyaEIP0=
 github.com/bloeys/assimp-go v0.3.2 h1:CsKnLloWZyn6uYNNaQE2Jq2Q+yH4d71A+CxbpU2flng=
 github.com/bloeys/assimp-go v0.3.2/go.mod h1:my3yRxT7CfOztmvi+0svmwbaqw0KFrxaHxncoyaEIP0=
+github.com/bloeys/assimp-go v0.3.3 h1:36Cqdsv/vVWg7mx6Kvu++1Z0SftdAQF4a+ApllpVT4M=
+github.com/bloeys/assimp-go v0.3.3/go.mod h1:my3yRxT7CfOztmvi+0svmwbaqw0KFrxaHxncoyaEIP0=
 github.com/bloeys/gglm v0.3.1 h1:Sy9upW7SBsBfDXrSmEhid3aQ+7J7itej+upwcxOnPMQ=
 github.com/bloeys/gglm v0.3.1/go.mod h1:qwJQ0WzV191wAMwlGicbfbChbKoSedMk7gFFX6GnyOk=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
