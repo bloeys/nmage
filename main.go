@@ -355,8 +355,9 @@ func runGameLogic() {
 
 func draw() {
 
-	simpleMat.Bind()
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
+	simpleMat.Bind()
 	cubeMesh.BufObj.Bind()
 	tempModelMat := modelMat.Clone()
 
@@ -373,13 +374,8 @@ func draw() {
 	cubeMesh.BufObj.UnBind()
 
 	drawUI()
-	window.SDLWin.GLSwap()
 
-	//Reset imgui changes before next draw
-	gl.Disable(gl.SCISSOR_TEST)
-	gl.Enable(gl.CULL_FACE)
-	gl.Enable(gl.DEPTH_TEST)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	window.SDLWin.GLSwap()
 }
 
 func drawUI() {
@@ -455,7 +451,6 @@ func drawUI() {
 			} else {
 
 				gl.BindTexture(gl.TEXTURE_2D, imguiInfo.texID)
-				// gl.BindTexture(gl.TEXTURE_2D, uint32(cmd.TextureID()))
 				clipRect := cmd.ClipRect()
 				gl.Scissor(int32(clipRect.X), int32(fbHeight)-int32(clipRect.W), int32(clipRect.Z-clipRect.X), int32(clipRect.W-clipRect.Y))
 
@@ -464,7 +459,9 @@ func drawUI() {
 		}
 	}
 
-	gl.BindVertexArray(imguiInfo.vaoID)
-	gl.BindBuffer(gl.ARRAY_BUFFER, imguiInfo.vboID)
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, imguiInfo.indexBufID)
+	//Reset gl state
+	gl.Disable(gl.BLEND)
+	gl.Disable(gl.SCISSOR_TEST)
+	gl.Enable(gl.CULL_FACE)
+	gl.Enable(gl.DEPTH_TEST)
 }

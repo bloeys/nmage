@@ -90,7 +90,6 @@ func initOpenGL() error {
 	}
 
 	gl.Enable(gl.DEPTH_TEST)
-
 	gl.Enable(gl.CULL_FACE)
 	gl.CullFace(gl.BACK)
 	gl.FrontFace(gl.CCW)
