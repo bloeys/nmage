@@ -25,16 +25,23 @@ func (m *Material) GetAttribLoc(attribName string) int32 {
 	return gl.GetAttribLocation(m.ShaderProg.ID, gl.Str(attribName+"\x00"))
 }
 
-func (m *Material) SetAttribute(attribName string, bufObj *buffers.BufferObject, buf *buffers.Buffer) {
+func (m *Material) SetAttribute(bufObj buffers.Buffer) {
 
 	bufObj.Bind()
-	buf.Activate()
 
-	attribLoc := m.GetAttribLoc(attribName)
-	gl.VertexAttribPointer(uint32(attribLoc), buf.ElementCount, buf.ElementType, false, buf.GetSize(), gl.PtrOffset(0))
+	//NOTE: VBOs are only bound at 'VertexAttribPointer', not BindBUffer, so we need to bind the buffer and vao here
+	gl.BindBuffer(gl.ARRAY_BUFFER, bufObj.BufID)
 
-	bufObj.Bind()
-	buf.Deactivate()
+	for i := 0; i < len(bufObj.Layout.Elements); i++ {
+
+		gl.EnableVertexAttribArray(uint32(i))
+
+		info := buffers.GetDataTypeInfo(bufObj.Layout.Elements[i].DataType)
+		gl.VertexAttribPointer(uint32(i), info.ElementCount, info.ElementType, false, bufObj.Stride, gl.PtrOffset(bufObj.Layout.Elements[i].Offset))
+	}
+
+	bufObj.UnBind()
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 }
 
 func (m *Material) EnableAttribute(attribName string) {

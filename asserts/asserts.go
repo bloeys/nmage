@@ -5,14 +5,11 @@ import (
 	"github.com/bloeys/nmage/logging"
 )
 
-func True(check bool, msg string) {
-	if consts.Debug && !check {
-		logging.ErrLog.Panicln(msg)
-	}
-}
+func T(check bool, msg string) {
 
-func False(check bool, msg string) {
-	if consts.Debug && check {
-		logging.ErrLog.Panicln(msg)
+	if !consts.Debug || check {
+		return
 	}
+
+	logging.ErrLog.Panicln("Assert failed:", msg)
 }

@@ -92,14 +92,7 @@ func main() {
 	initImGUI()
 
 	//Enable vertex attributes
-	simpleMat.SetAttribute("vertPosIn", cubeMesh.BufObj, cubeMesh.BufObj.VertPosBuf)
-	simpleMat.EnableAttribute("vertPosIn")
-
-	simpleMat.SetAttribute("vertColorIn", cubeMesh.BufObj, cubeMesh.BufObj.ColorBuf)
-	simpleMat.EnableAttribute("vertColorIn")
-
-	simpleMat.SetAttribute("vertNormalIn", cubeMesh.BufObj, cubeMesh.BufObj.NormalBuf)
-	simpleMat.EnableAttribute("vertNormalIn")
+	simpleMat.SetAttribute(cubeMesh.BufObjV2)
 
 	//Movement, scale and rotation
 	translationMat := gglm.NewTranslationMat(gglm.NewVec3(0, 0, 0))
@@ -358,23 +351,20 @@ func draw() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 	simpleMat.Bind()
-	cubeMesh.BufObj.Bind()
+	cubeMesh.BufObjV2.Bind()
 	tempModelMat := modelMat.Clone()
+	gl.BindBuffer(gl.ARRAY_BUFFER, cubeMesh.BufObjV2.BufID)
 
 	rowSize := 10
 	for y := 0; y < rowSize; y++ {
 		for x := 0; x < rowSize; x++ {
 			simpleMat.SetUnifMat4("modelMat", &tempModelMat.Translate(gglm.NewVec3(-1, 0, 0)).Mat4)
-			gl.DrawElements(gl.TRIANGLES, int32(cubeMesh.BufObj.IndexBuf.DataLen), gl.UNSIGNED_INT, gl.PtrOffset(0))
+			gl.DrawElements(gl.TRIANGLES, cubeMesh.BufObjV2.IndexBufCount, gl.UNSIGNED_INT, gl.PtrOffset(0))
 		}
 		simpleMat.SetUnifMat4("modelMat", &tempModelMat.Translate(gglm.NewVec3(float32(rowSize), -1, 0)).Mat4)
 	}
 
 	simpleMat.SetUnifMat4("modelMat", &modelMat.Mat4)
-	cubeMesh.BufObj.UnBind()
-
-	drawUI()
-
 	window.SDLWin.GLSwap()
 }
 

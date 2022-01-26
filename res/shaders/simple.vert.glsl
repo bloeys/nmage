@@ -1,8 +1,8 @@
 #version 410
 
-in vec3 vertPosIn;
-in vec3 vertColorIn;
-in vec3 vertNormalIn;
+layout(location=0) in vec3 vertPosIn;
+layout(location=1) in vec3 vertNormalIn;
+layout(location=2) in vec3 vertColorIn;
 
 out vec3 vertColor;
 out vec3 vertNormal;

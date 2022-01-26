@@ -11,8 +11,8 @@ import (
 )
 
 type Mesh struct {
-	Name   string
-	BufObj *buffers.BufferObject
+	Name     string
+	BufObjV2 buffers.Buffer
 }
 
 func NewMesh(name, modelPath string, postProcessFlags asig.PostProcess) (*Mesh, error) {
@@ -27,18 +27,77 @@ func NewMesh(name, modelPath string, postProcessFlags asig.PostProcess) (*Mesh, 
 		return nil, errors.New("No meshes found in file: " + modelPath)
 	}
 
-	mesh := &Mesh{Name: name, BufObj: buffers.NewBufferObject()}
+	mesh := &Mesh{Name: name}
 
 	sceneMesh := scene.Meshes[0]
-	mesh.BufObj.GenBuffer(flattenVec3(sceneMesh.Normals), buffers.BufUsageStatic, buffers.BufTypeNormal, buffers.DataTypeVec3)
-	mesh.BufObj.GenBuffer(flattenVec3(sceneMesh.Vertices), buffers.BufUsageStatic, buffers.BufTypeVertPos, buffers.DataTypeVec3)
-	mesh.BufObj.GenBufferUint32(flattenFaces(sceneMesh.Faces), buffers.BufUsageStatic, buffers.BufTypeIndex, buffers.DataTypeUint32)
+	dataSize := len(sceneMesh.Vertices)*3 + len(sceneMesh.Normals)*3
+
+	mesh.BufObjV2 = buffers.NewBuffer(buffers.BufferLayout{
+		Elements: []buffers.BufferLayoutElement{
+			{DataType: buffers.DataTypeVec3},
+			{DataType: buffers.DataTypeVec3},
+		},
+	})
 
 	if len(sceneMesh.ColorSets) > 0 {
-		mesh.BufObj.GenBuffer(flattenVec4(sceneMesh.ColorSets[0]), buffers.BufUsageStatic, buffers.BufTypeColor, buffers.DataTypeVec4)
+		mesh.BufObjV2.Layout.Elements = append(mesh.BufObjV2.Layout.Elements, buffers.BufferLayoutElement{DataType: buffers.DataTypeVec4})
+		dataSize += len(sceneMesh.ColorSets) * 4
+		mesh.BufObjV2.CalcValues()
 	}
 
+	positions := flattenVec3(sceneMesh.Vertices)
+	normals := flattenVec3(sceneMesh.Normals)
+	colors := []float32{}
+	if len(sceneMesh.ColorSets) > 0 {
+		colors = flattenVec4(sceneMesh.ColorSets[0])
+	}
+
+	var values []float32
+	if len(colors) > 0 {
+		values = interleave(
+			arrInfo{values: positions, valsPerComp: 3},
+			arrInfo{values: normals, valsPerComp: 3},
+			arrInfo{values: colors, valsPerComp: 4},
+		)
+	} else {
+		values = interleave(
+			arrInfo{values: positions, valsPerComp: 3},
+			arrInfo{values: normals, valsPerComp: 3},
+		)
+	}
+
+	mesh.BufObjV2.SetData(values)
+	mesh.BufObjV2.SetIndexBufData(flattenFaces(sceneMesh.Faces))
 	return mesh, nil
+}
+
+type arrInfo struct {
+	values      []float32
+	valsPerComp int
+}
+
+func interleave(arrs ...arrInfo) []float32 {
+
+	if len(arrs) == 0 || len(arrs[0].values) == 0 {
+		panic("No input to interleave or arrays are empty")
+	}
+
+	size := 0
+	for i := 0; i < len(arrs); i++ {
+		size += len(arrs[i].values)
+	}
+
+	out := make([]float32, 0, size)
+	for posInArr := 0; posInArr < len(arrs[0].values)/arrs[0].valsPerComp; posInArr++ {
+		for arrToUse := 0; arrToUse < len(arrs); arrToUse++ {
+			for compToAdd := 0; compToAdd < arrs[arrToUse].valsPerComp; compToAdd++ {
+
+				out = append(out, arrs[arrToUse].values[posInArr*arrs[arrToUse].valsPerComp+compToAdd])
+			}
+		}
+	}
+
+	return out
 }
 
 func flattenVec3(vec3s []gglm.Vec3) []float32 {
@@ -68,7 +127,7 @@ func flattenVec4(vec4s []gglm.Vec4) []float32 {
 
 func flattenFaces(faces []asig.Face) []uint32 {
 
-	asserts.True(len(faces[0].Indices) == 3, fmt.Sprintf("Face doesn't have 3 indices. Index count: %v\n", len(faces[0].Indices)))
+	asserts.T(len(faces[0].Indices) == 3, fmt.Sprintf("Face doesn't have 3 indices. Index count: %v\n", len(faces[0].Indices)))
 
 	uints := make([]uint32, len(faces)*3)
 	for i := 0; i < len(faces); i++ {
