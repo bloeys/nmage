@@ -92,7 +92,7 @@ func main() {
 	initImGUI()
 
 	//Enable vertex attributes
-	simpleMat.SetAttribute(cubeMesh.BufObjV2)
+	simpleMat.SetAttribute(cubeMesh.Buf)
 
 	//Movement, scale and rotation
 	translationMat := gglm.NewTranslationMat(gglm.NewVec3(0, 0, 0))
@@ -351,15 +351,14 @@ func draw() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 	simpleMat.Bind()
-	cubeMesh.BufObjV2.Bind()
+	cubeMesh.Buf.Bind()
 	tempModelMat := modelMat.Clone()
-	gl.BindBuffer(gl.ARRAY_BUFFER, cubeMesh.BufObjV2.BufID)
 
-	rowSize := 10
+	rowSize := 100
 	for y := 0; y < rowSize; y++ {
 		for x := 0; x < rowSize; x++ {
 			simpleMat.SetUnifMat4("modelMat", &tempModelMat.Translate(gglm.NewVec3(-1, 0, 0)).Mat4)
-			gl.DrawElements(gl.TRIANGLES, cubeMesh.BufObjV2.IndexBufCount, gl.UNSIGNED_INT, gl.PtrOffset(0))
+			gl.DrawElements(gl.TRIANGLES, cubeMesh.Buf.IndexBufCount, gl.UNSIGNED_INT, gl.PtrOffset(0))
 		}
 		simpleMat.SetUnifMat4("modelMat", &tempModelMat.Translate(gglm.NewVec3(float32(rowSize), -1, 0)).Mat4)
 	}

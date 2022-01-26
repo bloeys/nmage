@@ -32,12 +32,10 @@ func (m *Material) SetAttribute(bufObj buffers.Buffer) {
 	//NOTE: VBOs are only bound at 'VertexAttribPointer', not BindBUffer, so we need to bind the buffer and vao here
 	gl.BindBuffer(gl.ARRAY_BUFFER, bufObj.BufID)
 
-	for i := 0; i < len(bufObj.Layout.Elements); i++ {
-
+	layout := bufObj.GetLayout()
+	for i := 0; i < len(layout); i++ {
 		gl.EnableVertexAttribArray(uint32(i))
-
-		info := buffers.GetDataTypeInfo(bufObj.Layout.Elements[i].DataType)
-		gl.VertexAttribPointer(uint32(i), info.ElementCount, info.ElementType, false, bufObj.Stride, gl.PtrOffset(bufObj.Layout.Elements[i].Offset))
+		gl.VertexAttribPointer(uint32(i), layout[i].ElementType.CompCount(), layout[i].ElementType.GLType(), false, bufObj.Stride, gl.PtrOffset(layout[i].Offset))
 	}
 
 	bufObj.UnBind()

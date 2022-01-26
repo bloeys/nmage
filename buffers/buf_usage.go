@@ -11,20 +11,20 @@ type BufUsage int
 
 const (
 	//Buffer is set only once and used many times
-	BufUsageStatic BufUsage = iota
+	BufUsage_Static BufUsage = iota
 	//Buffer is changed a lot and used many times
-	BufUsageDynamic
+	BufUsage_Dynamic
 	//Buffer is set only once and used by the GPU at most a few times
-	BufUsageStream
+	BufUsage_Stream
 )
 
 func (b BufUsage) ToGL() uint32 {
 	switch b {
-	case BufUsageStatic:
+	case BufUsage_Static:
 		return gl.STATIC_DRAW
-	case BufUsageDynamic:
+	case BufUsage_Dynamic:
 		return gl.DYNAMIC_DRAW
-	case BufUsageStream:
+	case BufUsage_Stream:
 		return gl.STREAM_DRAW
 	}
 

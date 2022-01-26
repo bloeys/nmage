@@ -11,8 +11,8 @@ import (
 )
 
 type Mesh struct {
-	Name     string
-	BufObjV2 buffers.Buffer
+	Name string
+	Buf  buffers.Buffer
 }
 
 func NewMesh(name, modelPath string, postProcessFlags asig.PostProcess) (*Mesh, error) {
@@ -28,23 +28,17 @@ func NewMesh(name, modelPath string, postProcessFlags asig.PostProcess) (*Mesh, 
 	}
 
 	mesh := &Mesh{Name: name}
-
 	sceneMesh := scene.Meshes[0]
+	mesh.Buf = buffers.NewBuffer()
+
 	dataSize := len(sceneMesh.Vertices)*3 + len(sceneMesh.Normals)*3
-
-	mesh.BufObjV2 = buffers.NewBuffer(buffers.BufferLayout{
-		Elements: []buffers.BufferLayoutElement{
-			{DataType: buffers.DataTypeVec3},
-			{DataType: buffers.DataTypeVec3},
-		},
-	})
-
+	layoutToUse := []buffers.Element{{ElementType: buffers.DataTypeVec3}, {ElementType: buffers.DataTypeVec3}}
 	if len(sceneMesh.ColorSets) > 0 {
-		mesh.BufObjV2.Layout.Elements = append(mesh.BufObjV2.Layout.Elements, buffers.BufferLayoutElement{DataType: buffers.DataTypeVec4})
+		layoutToUse = append(layoutToUse, buffers.Element{ElementType: buffers.DataTypeVec4})
 		dataSize += len(sceneMesh.ColorSets) * 4
-		mesh.BufObjV2.CalcValues()
 	}
 
+	mesh.Buf.SetLayout(layoutToUse...)
 	positions := flattenVec3(sceneMesh.Vertices)
 	normals := flattenVec3(sceneMesh.Normals)
 	colors := []float32{}
@@ -66,8 +60,8 @@ func NewMesh(name, modelPath string, postProcessFlags asig.PostProcess) (*Mesh, 
 		)
 	}
 
-	mesh.BufObjV2.SetData(values)
-	mesh.BufObjV2.SetIndexBufData(flattenFaces(sceneMesh.Faces))
+	mesh.Buf.SetData(values)
+	mesh.Buf.SetIndexBufData(flattenFaces(sceneMesh.Faces))
 	return mesh, nil
 }
 

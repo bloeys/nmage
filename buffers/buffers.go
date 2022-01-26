@@ -5,15 +5,6 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
-type BufferLayoutElement struct {
-	Offset int
-	DataType
-}
-
-type BufferLayout struct {
-	Elements []BufferLayoutElement
-}
-
 type Buffer struct {
 	VAOID uint32
 	//BufID is the ID of the VBO
@@ -21,8 +12,9 @@ type Buffer struct {
 	//IndexBufID is the ID of the index/element buffer
 	IndexBufID    uint32
 	IndexBufCount int32
-	Layout        BufferLayout
 	Stride        int32
+
+	layout []Element
 }
 
 func (b *Buffer) Bind() {
@@ -33,23 +25,12 @@ func (b *Buffer) UnBind() {
 	gl.BindVertexArray(0)
 }
 
-func (b *Buffer) CalcValues() {
-
-	b.Stride = 0
-	for i := 0; i < len(b.Layout.Elements); i++ {
-
-		info := GetDataTypeInfo(b.Layout.Elements[i].DataType)
-		b.Layout.Elements[i].Offset = int(b.Stride)
-		b.Stride += info.GetSize()
-	}
-}
-
 func (b *Buffer) SetData(values []float32) {
 
 	gl.BindVertexArray(b.VAOID)
 	gl.BindBuffer(gl.ARRAY_BUFFER, b.BufID)
 
-	gl.BufferData(gl.ARRAY_BUFFER, len(values)*4, gl.Ptr(values), BufUsageStatic.ToGL())
+	gl.BufferData(gl.ARRAY_BUFFER, len(values)*4, gl.Ptr(values), BufUsage_Static.ToGL())
 
 	gl.BindVertexArray(0)
 	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
@@ -61,18 +42,33 @@ func (b *Buffer) SetIndexBufData(values []uint32) {
 	gl.BindVertexArray(b.VAOID)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, b.IndexBufID)
 
-	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(values)*4, gl.Ptr(values), BufUsageStatic.ToGL())
+	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(values)*4, gl.Ptr(values), BufUsage_Static.ToGL())
 
 	gl.BindVertexArray(0)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 }
 
-func NewBuffer(layout BufferLayout) Buffer {
+func (b *Buffer) GetLayout() []Element {
+	e := make([]Element, len(b.layout))
+	copy(e, b.layout)
+	return e
+}
 
-	b := Buffer{
-		Layout: layout,
+func (b *Buffer) SetLayout(layout ...Element) {
+
+	b.layout = layout
+
+	b.Stride = 0
+	for i := 0; i < len(b.layout); i++ {
+
+		b.layout[i].Offset = int(b.Stride)
+		b.Stride += b.layout[i].Size()
 	}
+}
 
+func NewBuffer(layout ...Element) Buffer {
+
+	b := Buffer{}
 	gl.GenVertexArrays(1, &b.VAOID)
 	if b.VAOID == 0 {
 		logging.ErrLog.Println("Failed to create openGL vertex array object")
@@ -88,6 +84,6 @@ func NewBuffer(layout BufferLayout) Buffer {
 		logging.ErrLog.Println("Failed to create openGL buffer")
 	}
 
-	b.CalcValues()
+	b.SetLayout(layout...)
 	return b
 }
