@@ -1,10 +1,10 @@
-name: Run-nmage
+name: build-nmage
 on:
   create:
   workflow_dispatch:
 
 jobs:
-  Run-nmage-macos:
+  build-nmage-macos:
     runs-on: macos-10.15
     steps:
       - name: Install golang 1.17
@@ -19,4 +19,4 @@ jobs:
         run: git clone https://github.com/bloeys/nmage
       - name: Run nmage
         working-directory: nmage
-        run: go run .
+        run: go build .
