@@ -6,10 +6,7 @@ import (
 )
 
 func T(check bool, msg string) {
-
-	if !consts.Debug || check {
-		return
+	if consts.Debug && !check {
+		logging.ErrLog.Panicln("Assert failed:", msg)
 	}
-
-	logging.ErrLog.Panicln("Assert failed:", msg)
 }

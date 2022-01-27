@@ -31,32 +31,23 @@ func NewMesh(name, modelPath string, postProcessFlags asig.PostProcess) (*Mesh, 
 	sceneMesh := scene.Meshes[0]
 	mesh.Buf = buffers.NewBuffer()
 
-	dataSize := len(sceneMesh.Vertices)*3 + len(sceneMesh.Normals)*3
 	layoutToUse := []buffers.Element{{ElementType: buffers.DataTypeVec3}, {ElementType: buffers.DataTypeVec3}}
 	if len(sceneMesh.ColorSets) > 0 {
 		layoutToUse = append(layoutToUse, buffers.Element{ElementType: buffers.DataTypeVec4})
-		dataSize += len(sceneMesh.ColorSets) * 4
 	}
-
 	mesh.Buf.SetLayout(layoutToUse...)
-	positions := flattenVec3(sceneMesh.Vertices)
-	normals := flattenVec3(sceneMesh.Normals)
-	colors := []float32{}
-	if len(sceneMesh.ColorSets) > 0 {
-		colors = flattenVec4(sceneMesh.ColorSets[0])
-	}
 
 	var values []float32
-	if len(colors) > 0 {
+	if len(sceneMesh.ColorSets) > 0 {
 		values = interleave(
-			arrInfo{values: positions, valsPerComp: 3},
-			arrInfo{values: normals, valsPerComp: 3},
-			arrInfo{values: colors, valsPerComp: 4},
+			arrToInterleave{V3s: sceneMesh.Vertices},
+			arrToInterleave{V3s: sceneMesh.Normals},
+			arrToInterleave{V4s: sceneMesh.ColorSets[0]},
 		)
 	} else {
 		values = interleave(
-			arrInfo{values: positions, valsPerComp: 3},
-			arrInfo{values: normals, valsPerComp: 3},
+			arrToInterleave{V3s: sceneMesh.Vertices},
+			arrToInterleave{V3s: sceneMesh.Normals},
 		)
 	}
 
@@ -65,29 +56,50 @@ func NewMesh(name, modelPath string, postProcessFlags asig.PostProcess) (*Mesh, 
 	return mesh, nil
 }
 
-type arrInfo struct {
-	values      []float32
-	valsPerComp int
+type arrToInterleave struct {
+	V3s []gglm.Vec3
+	V4s []gglm.Vec4
 }
 
-func interleave(arrs ...arrInfo) []float32 {
+func (a *arrToInterleave) get(i int) []float32 {
 
-	if len(arrs) == 0 || len(arrs[0].values) == 0 {
-		panic("No input to interleave or arrays are empty")
+	asserts.T(len(a.V3s) == 0 || len(a.V4s) == 0, "One array should be set in arrToInterleave, but both arrays are set")
+
+	if len(a.V3s) > 0 {
+		return a.V3s[i].Data[:]
+	} else {
+		return a.V4s[i].Data[:]
+	}
+}
+
+func interleave(arrs ...arrToInterleave) []float32 {
+
+	asserts.T(len(arrs) > 0, "No input sent to interleave")
+	asserts.T(len(arrs[0].V3s) > 0 || len(arrs[0].V4s) > 0, "Interleave arrays are empty")
+
+	elementCount := 0
+	if len(arrs[0].V3s) > 0 {
+		elementCount = len(arrs[0].V3s)
+	} else {
+		elementCount = len(arrs[0].V4s)
 	}
 
-	size := 0
+	totalSize := 0
 	for i := 0; i < len(arrs); i++ {
-		size += len(arrs[i].values)
+
+		asserts.T(len(arrs[i].V3s) == elementCount || len(arrs[i].V4s) == elementCount, "Mesh vertex data given to interleave is not the same length")
+
+		if len(arrs[i].V3s) > 0 {
+			totalSize += len(arrs[i].V3s) * 3
+		} else {
+			totalSize += len(arrs[i].V4s) * 4
+		}
 	}
 
-	out := make([]float32, 0, size)
-	for posInArr := 0; posInArr < len(arrs[0].values)/arrs[0].valsPerComp; posInArr++ {
+	out := make([]float32, 0, totalSize)
+	for i := 0; i < elementCount; i++ {
 		for arrToUse := 0; arrToUse < len(arrs); arrToUse++ {
-			for compToAdd := 0; compToAdd < arrs[arrToUse].valsPerComp; compToAdd++ {
-
-				out = append(out, arrs[arrToUse].values[posInArr*arrs[arrToUse].valsPerComp+compToAdd])
-			}
+			out = append(out, arrs[arrToUse].get(i)...)
 		}
 	}
 
