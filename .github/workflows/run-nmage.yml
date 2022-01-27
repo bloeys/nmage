@@ -1,4 +1,4 @@
-name: Run-nMage
+name: Run-nmage
 on:
   create:
   workflow_dispatch:
@@ -11,8 +11,10 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: '^1.17'
-      - name: Get dylib
+      - name: Install asimp-go dylib
         run: sudo mkdir -p /usr/local/lib && sudo wget https://github.com/bloeys/assimp-go/releases/download/v0.4.2/libassimp_darwin_amd64.dylib -O /usr/local/lib/libassimp.5.dylib
+      - name: Install SDL2
+        run: brew install sdl2{,_image,_mixer,_ttf,_gfx} pkg-config
       - name: Clone nmage
         run: git clone https://github.com/bloeys/nmage
       - name: Run nmage

@@ -17,6 +17,7 @@ To run the project you need:
 * A C/C++ compiler installed and in your path
   * Windows: [MingW](https://www.mingw-w64.org/downloads/#mingw-builds) or similar
   * Mac/Linux: Should be installed by default, but if not try [GCC](https://gcc.gnu.org/) or [Clang](https://releases.llvm.org/download.html)
+* Install SDL2 by following their [requirements](https://github.com/veandco/go-sdl2#requirements).
 * Get the required [assimp-go](https://github.com/bloeys/assimp-go) DLLs/DyLibs and place them correctly by following the assimp-go [README](https://github.com/bloeys/assimp-go#using-assimp-go).
 
 Then you can start nMage with `go run .`
