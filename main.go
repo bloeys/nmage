@@ -28,8 +28,6 @@ import (
 
 //Low Priority:
 //	Proper Asset loading
-//	Rework buffers package
-//	Interleaved or packed buffers (xyzxyzxyz OR xxxyyyzzz)
 
 type ImguiInfo struct {
 	imCtx *imgui.Context
