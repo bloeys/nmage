@@ -1,0 +1,19 @@
+name: Run-nMage
+on:
+  workflow_dispatch:
+
+jobs:
+  Run-nmage-macos:
+    runs-on: macos-10.15
+    steps:
+      - name: Install golang 1.17
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.17'
+      - name: Get dylib
+        run: sudo mkdir -p /usr/local/lib && sudo wget https://github.com/bloeys/assimp-go/releases/download/v0.4.2/libassimp_darwin_amd64.dylib -O /usr/local/lib/libassimp.5.dylib
+      - name: Clone nmage
+        run: git clone https://github.com/bloeys/nmage
+      - name: Run nmage
+        working-directory: nmage
+        run: go run .
