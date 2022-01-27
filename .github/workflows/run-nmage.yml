@@ -1,5 +1,6 @@
 name: Run-nMage
 on:
+  create:
   workflow_dispatch:
 
 jobs:
