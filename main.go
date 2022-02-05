@@ -356,7 +356,7 @@ func draw() {
 	cubeMesh.Buf.Bind()
 	tempModelMat := modelMat.Clone()
 
-	rowSize := 100
+	rowSize := 10
 	for y := 0; y < rowSize; y++ {
 		for x := 0; x < rowSize; x++ {
 			simpleMat.SetUnifMat4("modelMat", &tempModelMat.Translate(gglm.NewVec3(-1, 0, 0)).Mat4)

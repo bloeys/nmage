@@ -11,6 +11,7 @@ func SetTexture(t Texture) {
 		return
 	}
 
+	println("Loaded texture:", t.Path)
 	Textures[t.TexID] = t
 	TexturePaths[t.Path] = t.TexID
 }
