@@ -38,7 +38,7 @@ func NewMesh(name, modelPath string, postProcessFlags asig.PostProcess) (*Mesh, 
 	mesh.Buf.SetLayout(layoutToUse...)
 
 	var values []float32
-	if len(sceneMesh.ColorSets) > 0 {
+	if len(sceneMesh.ColorSets) > 0 && len(sceneMesh.ColorSets[0]) > 0 {
 		values = interleave(
 			arrToInterleave{V3s: sceneMesh.Vertices},
 			arrToInterleave{V3s: sceneMesh.Normals},

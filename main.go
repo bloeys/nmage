@@ -360,8 +360,9 @@ func draw() {
 		}
 		simpleMat.SetUnifMat4("modelMat", &tempModelMat.Translate(gglm.NewVec3(float32(rowSize), -1, 0)).Mat4)
 	}
-
 	simpleMat.SetUnifMat4("modelMat", &modelMat.Mat4)
+
+	drawUI()
 	window.SDLWin.GLSwap()
 }
 
