@@ -9,13 +9,16 @@ import (
 	"github.com/bloeys/nmage/asserts"
 	"github.com/bloeys/nmage/assets"
 	"github.com/bloeys/nmage/buffers"
-	"github.com/bloeys/nmage/logging"
 )
 
 type Mesh struct {
 	Name       string
 	TextureIDs []uint32
 	Buf        buffers.Buffer
+}
+
+func (m *Mesh) AddTexture(tex assets.Texture) {
+	m.TextureIDs = append(m.TextureIDs, tex.TexID)
 }
 
 func NewMesh(name, modelPath string, postProcessFlags asig.PostProcess) (*Mesh, error) {
@@ -41,22 +44,6 @@ func NewMesh(name, modelPath string, postProcessFlags asig.PostProcess) (*Mesh, 
 		layoutToUse = append(layoutToUse, buffers.Element{ElementType: buffers.DataTypeVec4})
 	}
 	mesh.Buf.SetLayout(layoutToUse...)
-
-	//Load diffuse textures
-	mat := scene.Materials[sceneMesh.MaterialIndex]
-	if asig.GetMaterialTextureCount(mat, asig.TextureTypeDiffuse) > 0 {
-		texInfo, err := asig.GetMaterialTexture(mat, asig.TextureTypeDiffuse, 0)
-		if err != nil {
-			logging.ErrLog.Fatalf("Failed to get material texture of index 0. Err: %e\n", err)
-		}
-
-		tex, err := assets.LoadPNG(texInfo.Path)
-		if err != nil {
-			logging.ErrLog.Fatalf("Loading PNG with path '%s' failed. Err: %e\n", texInfo.Path, err)
-		}
-
-		mesh.TextureIDs = append(mesh.TextureIDs, tex.TexID)
-	}
 
 	var values []float32
 	arrs := []arrToInterleave{{V3s: sceneMesh.Vertices}, {V3s: sceneMesh.Normals}, {V2s: v3sToV2s(sceneMesh.TexCoords[0])}}

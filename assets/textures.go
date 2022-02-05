@@ -24,7 +24,7 @@ type Texture struct {
 	Pixels []byte
 }
 
-func LoadPNG(file string) (Texture, error) {
+func LoadPNGTexture(file string) (Texture, error) {
 
 	if tex, ok := GetTexturePath(file); ok {
 		return tex, nil

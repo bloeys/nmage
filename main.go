@@ -6,6 +6,7 @@ import (
 
 	"github.com/bloeys/assimp-go/asig"
 	"github.com/bloeys/gglm/gglm"
+	"github.com/bloeys/nmage/assets"
 	"github.com/bloeys/nmage/engine"
 	"github.com/bloeys/nmage/input"
 	"github.com/bloeys/nmage/logging"
@@ -85,6 +86,13 @@ func main() {
 	if err != nil {
 		logging.ErrLog.Fatalln("Failed to load cube mesh. Err: ", err)
 	}
+
+	//Load textures
+	tex, err := assets.LoadPNGTexture("./res/textures/Low poly planet.png")
+	if err != nil {
+		logging.ErrLog.Fatalln("Failed to load texture. Err: ", err)
+	}
+	cubeMesh.AddTexture(tex)
 
 	//Set mesh textures on material
 	for _, v := range cubeMesh.TextureIDs {
