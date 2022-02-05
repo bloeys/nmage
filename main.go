@@ -23,7 +23,6 @@ import (
 //Flesh out the material system
 //Object
 //Abstract UI
-//Textures
 //Audio
 
 //Low Priority:
@@ -82,9 +81,14 @@ func main() {
 	imguiMat = materials.NewMaterial("ImGUI Mat", "./res/shaders/imgui")
 
 	//Load meshes
-	cubeMesh, err = meshes.NewMesh("Cube", "./res/models/color-cube.fbx", asig.PostProcess(0))
+	cubeMesh, err = meshes.NewMesh("Cube", "./res/models/tex-cube.fbx", asig.PostProcess(0))
 	if err != nil {
 		logging.ErrLog.Fatalln("Failed to load cube mesh. Err: ", err)
+	}
+
+	//Set mesh textures on material
+	for _, v := range cubeMesh.TextureIDs {
+		simpleMat.AddTextureID(v)
 	}
 
 	initImGUI()
@@ -352,7 +356,7 @@ func draw() {
 	cubeMesh.Buf.Bind()
 	tempModelMat := modelMat.Clone()
 
-	rowSize := 10
+	rowSize := 100
 	for y := 0; y < rowSize; y++ {
 		for x := 0; x < rowSize; x++ {
 			simpleMat.SetUnifMat4("modelMat", &tempModelMat.Translate(gglm.NewVec3(-1, 0, 0)).Mat4)

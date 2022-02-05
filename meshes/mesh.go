@@ -7,12 +7,15 @@ import (
 	"github.com/bloeys/assimp-go/asig"
 	"github.com/bloeys/gglm/gglm"
 	"github.com/bloeys/nmage/asserts"
+	"github.com/bloeys/nmage/assets"
 	"github.com/bloeys/nmage/buffers"
+	"github.com/bloeys/nmage/logging"
 )
 
 type Mesh struct {
-	Name string
-	Buf  buffers.Buffer
+	Name       string
+	TextureIDs []uint32
+	Buf        buffers.Buffer
 }
 
 func NewMesh(name, modelPath string, postProcessFlags asig.PostProcess) (*Mesh, error) {
@@ -31,41 +34,71 @@ func NewMesh(name, modelPath string, postProcessFlags asig.PostProcess) (*Mesh, 
 	sceneMesh := scene.Meshes[0]
 	mesh.Buf = buffers.NewBuffer()
 
-	layoutToUse := []buffers.Element{{ElementType: buffers.DataTypeVec3}, {ElementType: buffers.DataTypeVec3}}
-	if len(sceneMesh.ColorSets) > 0 {
+	asserts.T(len(sceneMesh.TexCoords[0]) > 0, "Mesh has no UV0")
+	layoutToUse := []buffers.Element{{ElementType: buffers.DataTypeVec3}, {ElementType: buffers.DataTypeVec3}, {ElementType: buffers.DataTypeVec2}}
+
+	if len(sceneMesh.ColorSets) > 0 && len(sceneMesh.ColorSets[0]) > 0 {
 		layoutToUse = append(layoutToUse, buffers.Element{ElementType: buffers.DataTypeVec4})
 	}
 	mesh.Buf.SetLayout(layoutToUse...)
 
-	var values []float32
-	if len(sceneMesh.ColorSets) > 0 && len(sceneMesh.ColorSets[0]) > 0 {
-		values = interleave(
-			arrToInterleave{V3s: sceneMesh.Vertices},
-			arrToInterleave{V3s: sceneMesh.Normals},
-			arrToInterleave{V4s: sceneMesh.ColorSets[0]},
-		)
-	} else {
-		values = interleave(
-			arrToInterleave{V3s: sceneMesh.Vertices},
-			arrToInterleave{V3s: sceneMesh.Normals},
-		)
+	//Load diffuse textures
+	mat := scene.Materials[sceneMesh.MaterialIndex]
+	if asig.GetMaterialTextureCount(mat, asig.TextureTypeDiffuse) > 0 {
+		texInfo, err := asig.GetMaterialTexture(mat, asig.TextureTypeDiffuse, 0)
+		if err != nil {
+			logging.ErrLog.Fatalf("Failed to get material texture of index 0. Err: %e\n", err)
+		}
+
+		tex, err := assets.LoadPNG(texInfo.Path)
+		if err != nil {
+			logging.ErrLog.Fatalf("Loading PNG with path '%s' failed. Err: %e\n", texInfo.Path, err)
+		}
+
+		mesh.TextureIDs = append(mesh.TextureIDs, tex.TexID)
 	}
+
+	var values []float32
+	arrs := []arrToInterleave{{V3s: sceneMesh.Vertices}, {V3s: sceneMesh.Normals}, {V2s: v3sToV2s(sceneMesh.TexCoords[0])}}
+
+	if len(sceneMesh.ColorSets) > 0 && len(sceneMesh.ColorSets[0]) > 0 {
+		arrs = append(arrs, arrToInterleave{V4s: sceneMesh.ColorSets[0]})
+	}
+
+	values = interleave(arrs...)
 
 	mesh.Buf.SetData(values)
 	mesh.Buf.SetIndexBufData(flattenFaces(sceneMesh.Faces))
 	return mesh, nil
 }
 
+func v3sToV2s(v3s []gglm.Vec3) []gglm.Vec2 {
+
+	v2s := make([]gglm.Vec2, len(v3s))
+	for i := 0; i < len(v3s); i++ {
+		v2s[i] = gglm.Vec2{
+			Data: [2]float32{v3s[i].X(), v3s[i].Y()},
+		}
+	}
+
+	return v2s
+}
+
 type arrToInterleave struct {
+	V2s []gglm.Vec2
 	V3s []gglm.Vec3
 	V4s []gglm.Vec4
 }
 
 func (a *arrToInterleave) get(i int) []float32 {
 
+	asserts.T(len(a.V2s) == 0 || len(a.V3s) == 0, "One array should be set in arrToInterleave, but both arrays are set")
+	asserts.T(len(a.V2s) == 0 || len(a.V4s) == 0, "One array should be set in arrToInterleave, but both arrays are set")
 	asserts.T(len(a.V3s) == 0 || len(a.V4s) == 0, "One array should be set in arrToInterleave, but both arrays are set")
 
-	if len(a.V3s) > 0 {
+	if len(a.V2s) > 0 {
+		return a.V2s[i].Data[:]
+	} else if len(a.V3s) > 0 {
 		return a.V3s[i].Data[:]
 	} else {
 		return a.V4s[i].Data[:]
@@ -75,21 +108,26 @@ func (a *arrToInterleave) get(i int) []float32 {
 func interleave(arrs ...arrToInterleave) []float32 {
 
 	asserts.T(len(arrs) > 0, "No input sent to interleave")
-	asserts.T(len(arrs[0].V3s) > 0 || len(arrs[0].V4s) > 0, "Interleave arrays are empty")
+	asserts.T(len(arrs[0].V2s) > 0 || len(arrs[0].V3s) > 0 || len(arrs[0].V4s) > 0, "Interleave arrays are empty")
 
 	elementCount := 0
-	if len(arrs[0].V3s) > 0 {
+	if len(arrs[0].V2s) > 0 {
+		elementCount = len(arrs[0].V2s)
+	} else if len(arrs[0].V3s) > 0 {
 		elementCount = len(arrs[0].V3s)
 	} else {
 		elementCount = len(arrs[0].V4s)
 	}
 
+	//Calculate final size of the float buffer
 	totalSize := 0
 	for i := 0; i < len(arrs); i++ {
 
-		asserts.T(len(arrs[i].V3s) == elementCount || len(arrs[i].V4s) == elementCount, "Mesh vertex data given to interleave is not the same length")
+		asserts.T(len(arrs[i].V2s) == elementCount || len(arrs[i].V3s) == elementCount || len(arrs[i].V4s) == elementCount, "Mesh vertex data given to interleave is not the same length")
 
-		if len(arrs[i].V3s) > 0 {
+		if len(arrs[i].V2s) > 0 {
+			totalSize += len(arrs[i].V2s) * 2
+		} else if len(arrs[i].V3s) > 0 {
 			totalSize += len(arrs[i].V3s) * 3
 		} else {
 			totalSize += len(arrs[i].V4s) * 4
