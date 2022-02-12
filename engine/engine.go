@@ -1,14 +1,82 @@
 package engine
 
 import (
+	"github.com/bloeys/nmage/input"
 	"github.com/bloeys/nmage/timing"
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
 type Window struct {
 	SDLWin *sdl.Window
 	GlCtx  sdl.GLContext
+}
+
+func (w *Window) handleInputs() {
+
+	input.EventLoopStart()
+	imIO := imgui.CurrentIO()
+
+	for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
+
+		switch e := event.(type) {
+
+		case *sdl.MouseWheelEvent:
+
+			input.HandleMouseWheelEvent(e)
+
+			xDelta, yDelta := input.GetMouseWheelMotion()
+			imIO.AddMouseWheelDelta(float32(xDelta), float32(yDelta))
+
+		case *sdl.KeyboardEvent:
+			input.HandleKeyboardEvent(e)
+
+			if e.Type == sdl.KEYDOWN {
+				imIO.KeyPress(int(e.Keysym.Scancode))
+			} else if e.Type == sdl.KEYUP {
+				imIO.KeyRelease(int(e.Keysym.Scancode))
+			}
+
+		case *sdl.TextInputEvent:
+			imIO.AddInputCharacters(string(e.Text[:]))
+
+		case *sdl.MouseButtonEvent:
+			input.HandleMouseBtnEvent(e)
+
+		case *sdl.MouseMotionEvent:
+			input.HandleMouseMotionEvent(e)
+
+		case *sdl.WindowEvent:
+			if e.Event == sdl.WINDOWEVENT_SIZE_CHANGED {
+				w.handleWindowResize()
+			}
+
+		case *sdl.QuitEvent:
+			input.HandleQuitEvent(e)
+		}
+	}
+
+	// If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release events that are shorter than 1 frame.
+	x, y, _ := sdl.GetMouseState()
+	imIO.SetMousePosition(imgui.Vec2{X: float32(x), Y: float32(y)})
+
+	imIO.SetMouseButtonDown(0, input.MouseDown(sdl.BUTTON_LEFT))
+	imIO.SetMouseButtonDown(1, input.MouseDown(sdl.BUTTON_RIGHT))
+	imIO.SetMouseButtonDown(2, input.MouseDown(sdl.BUTTON_MIDDLE))
+
+	imIO.KeyShift(sdl.SCANCODE_LSHIFT, sdl.SCANCODE_RSHIFT)
+	imIO.KeyCtrl(sdl.SCANCODE_LCTRL, sdl.SCANCODE_RCTRL)
+	imIO.KeyAlt(sdl.SCANCODE_LALT, sdl.SCANCODE_RALT)
+}
+
+func (w *Window) handleWindowResize() {
+
+	fbWidth, fbHeight := w.SDLWin.GLGetDrawableSize()
+	if fbWidth <= 0 || fbHeight <= 0 {
+		return
+	}
+	gl.Viewport(0, 0, fbWidth, fbHeight)
 }
 
 func (w *Window) Destroy() error {

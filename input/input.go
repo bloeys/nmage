@@ -31,10 +31,11 @@ type mouseWheelState struct {
 }
 
 var (
-	keyMap      = make(map[sdl.Keycode]*keyState)
-	mouseBtnMap = make(map[int]*mouseBtnState)
-	mouseMotion = mouseMotionState{}
-	mouseWheel  = mouseWheelState{}
+	keyMap        = make(map[sdl.Keycode]*keyState)
+	mouseBtnMap   = make(map[int]*mouseBtnState)
+	mouseMotion   = mouseMotionState{}
+	mouseWheel    = mouseWheelState{}
+	quitRequested bool
 )
 
 func EventLoopStart() {
@@ -55,6 +56,16 @@ func EventLoopStart() {
 
 	mouseWheel.XDelta = 0
 	mouseWheel.YDelta = 0
+
+	quitRequested = false
+}
+
+func HandleQuitEvent(e *sdl.QuitEvent) {
+	quitRequested = true
+}
+
+func IsQuitClicked() bool {
+	return quitRequested
 }
 
 func HandleKeyboardEvent(e *sdl.KeyboardEvent) {
