@@ -50,7 +50,7 @@ func LoadPNGTexture(file string) (Texture, error) {
 
 	//NOTE: We only support 8-bit channels (32-bit colors) for now
 	i := 0
-	for y := 0; y < img.Bounds().Dy(); y++ {
+	for y := img.Bounds().Dy() - 1; y >= 0; y-- {
 		for x := 0; x < img.Bounds().Dx(); x++ {
 
 			c := color.NRGBAModel.Convert(img.At(x, y)).(color.NRGBA)

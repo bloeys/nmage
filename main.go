@@ -26,6 +26,7 @@ import (
 //Flesh out the material system
 
 //Low Priority:
+// Abstract keys enum away from sdl
 // Abstract UI
 // Proper Asset loading
 
@@ -137,8 +138,10 @@ func (g *OurGame) Update() {
 	}
 
 	//Rotating cubes
-	modelMat.Rotate(10*timing.DT()*gglm.Deg2Rad, gglm.NewVec3(1, 1, 1).Normalize())
-	simpleMat.SetUnifMat4("modelMat", &modelMat.Mat4)
+	if input.KeyDown(sdl.K_SPACE) {
+		modelMat.Rotate(10*timing.DT()*gglm.Deg2Rad, gglm.NewVec3(1, 1, 1).Normalize())
+		simpleMat.SetUnifMat4("modelMat", &modelMat.Mat4)
+	}
 
 	imgui.DragFloat3("Cam Pos", &camPos.Data)
 }
