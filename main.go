@@ -38,11 +38,13 @@ var (
 	simpleMat *materials.Material
 	cubeMesh  *meshes.Mesh
 
-	modelMat = gglm.NewTrMatId()
-	projMat  = &gglm.Mat4{}
-
+	modelMat   = gglm.NewTrMatId()
+	projMat    = &gglm.Mat4{}
 	camPos     = gglm.NewVec3(0, 0, -10)
 	camForward = gglm.NewVec3(0, 0, 1)
+
+	lightPos1   = gglm.NewVec3(2, 2, 0)
+	lightColor1 = gglm.NewVec3(1, 1, 1)
 )
 
 type OurGame struct {
@@ -94,8 +96,8 @@ func (g *OurGame) Init() {
 	simpleMat.SetUnifMat4("projMat", projMat)
 
 	//Lights
-	simpleMat.SetUnifVec3("lightPos1", &lightPos1)
-	simpleMat.SetUnifVec3("lightColor1", &lightColor1)
+	simpleMat.SetUnifVec3("lightPos1", lightPos1)
+	simpleMat.SetUnifVec3("lightColor1", lightColor1)
 }
 
 func (g *OurGame) FrameStart() {
@@ -172,7 +174,7 @@ func (g *OurGame) Render() {
 	if timing.ElapsedTime() > lastElapsedTime {
 
 		avgDT := dtAccum / float32(framesSinceLastFPSUpdate)
-		g.GetWindow().SDLWin.SetTitle("nMage (" + fmt.Sprint(1/avgDT, " fps)"))
+		g.GetWindow().SDLWin.SetTitle(fmt.Sprint("nMage (", 1/avgDT, " fps)"))
 
 		dtAccum = 0
 		framesSinceLastFPSUpdate = 0
@@ -234,12 +236,3 @@ func updateViewMat() {
 	viewMat := gglm.LookAt(camPos, targetPos, gglm.NewVec3(0, 1, 0))
 	simpleMat.SetUnifMat4("viewMat", &viewMat.Mat4)
 }
-
-var time uint64 = 0
-var name string = ""
-
-var ambientColor gglm.Vec3 = *gglm.NewVec3(1, 1, 1)
-var ambientColorStrength float32 = 0.1
-
-var lightPos1 gglm.Vec3 = *gglm.NewVec3(2, 2, 0)
-var lightColor1 gglm.Vec3 = *gglm.NewVec3(1, 1, 1)
