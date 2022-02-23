@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"runtime"
 
 	"github.com/bloeys/assimp-go/asig"
@@ -146,13 +147,17 @@ func (g *OurGame) Update() {
 	imgui.DragFloat3("Cam Pos", &camPos.Data)
 }
 
+var dtAccum float32 = 0
+var lastElapsedTime uint64 = 0
+var framesSinceLastFPSUpdate uint = 0
+
 func (g *OurGame) Render() {
 
 	simpleMat.Bind()
 	cubeMesh.Buf.Bind()
 	tempModelMat := modelMat.Clone()
 
-	rowSize := 10
+	rowSize := 100
 	for y := 0; y < rowSize; y++ {
 		for x := 0; x < rowSize; x++ {
 			simpleMat.SetUnifMat4("modelMat", &tempModelMat.Translate(gglm.NewVec3(-1, 0, 0)).Mat4)
@@ -161,6 +166,19 @@ func (g *OurGame) Render() {
 		simpleMat.SetUnifMat4("modelMat", &tempModelMat.Translate(gglm.NewVec3(float32(rowSize), -1, 0)).Mat4)
 	}
 	simpleMat.SetUnifMat4("modelMat", &modelMat.Mat4)
+
+	dtAccum += timing.DT()
+	framesSinceLastFPSUpdate++
+	if timing.ElapsedTime() > lastElapsedTime {
+
+		avgDT := dtAccum / float32(framesSinceLastFPSUpdate)
+		g.GetWindow().SDLWin.SetTitle("nMage (" + fmt.Sprint(1/avgDT, " fps)"))
+
+		dtAccum = 0
+		framesSinceLastFPSUpdate = 0
+	}
+
+	lastElapsedTime = timing.ElapsedTime()
 }
 
 func (g *OurGame) FrameEnd() {

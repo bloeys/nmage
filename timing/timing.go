@@ -20,7 +20,7 @@ func FrameEnded() {
 	dt = float32(time.Since(frameStart).Seconds())
 }
 
-//DT is frame deltatime in milliseconds
+//DT is frame deltatime in seconds
 func DT() float32 {
 	return dt
 }
