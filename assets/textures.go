@@ -48,6 +48,7 @@ func LoadPNGTexture(file string) (Texture, error) {
 		Pixels: make([]byte, img.Bounds().Dx()*img.Bounds().Dy()*4),
 	}
 
+	//NOTE: Load bottom left to top right because this is the texture coordinate system used by OpenGL
 	//NOTE: We only support 8-bit channels (32-bit colors) for now
 	i := 0
 	for y := img.Bounds().Dy() - 1; y >= 0; y-- {
@@ -75,7 +76,7 @@ func LoadPNGTexture(file string) (Texture, error) {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 
 	// load and generate the texture
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, tex.Width, tex.Height, 0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&tex.Pixels[0]))
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, tex.Width, tex.Height, 0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&tex.Pixels[0]))
 	gl.GenerateMipmap(gl.TEXTURE_2D)
 
 	SetTexture(tex)
