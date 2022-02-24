@@ -9,8 +9,9 @@ import (
 )
 
 type Window struct {
-	SDLWin *sdl.Window
-	GlCtx  sdl.GLContext
+	SDLWin         *sdl.Window
+	GlCtx          sdl.GLContext
+	EventCallbacks []func(sdl.Event)
 }
 
 func (w *Window) handleInputs() {
@@ -20,6 +21,12 @@ func (w *Window) handleInputs() {
 
 	for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 
+		//Fire callbacks
+		for i := 0; i < len(w.EventCallbacks); i++ {
+			w.EventCallbacks[i](event)
+		}
+
+		//Internal processing
 		switch e := event.(type) {
 
 		case *sdl.MouseWheelEvent:
@@ -136,7 +143,7 @@ func createWindow(title string, x, y, width, height int32, flags WindowFlags) (*
 	if err != nil {
 		return nil, err
 	}
-	win := &Window{SDLWin: sdlWin}
+	win := &Window{SDLWin: sdlWin, EventCallbacks: make([]func(sdl.Event), 0)}
 
 	win.GlCtx, err = sdlWin.GLCreateContext()
 	if err != nil {
