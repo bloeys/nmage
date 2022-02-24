@@ -134,12 +134,22 @@ func (i *ImguiInfo) Render(winWidth, winHeight float32, fbWidth, fbHeight int32)
 	gl.Enable(gl.DEPTH_TEST)
 }
 
-func (i *ImguiInfo) AddFontTTF(fontPath string, fontSize float32) imgui.Font {
+func (i *ImguiInfo) AddFontTTF(fontPath string, fontSize float32, fontConfig *imgui.FontConfig, glyphRanges *imgui.GlyphRanges) imgui.Font {
+
+	fontConfigToUse := imgui.DefaultFontConfig
+	if fontConfig != nil {
+		fontConfigToUse = *fontConfig
+	}
+
+	glyphRangesToUse := imgui.EmptyGlyphRanges
+	if glyphRanges != nil {
+		glyphRangesToUse = *glyphRanges
+	}
 
 	imIO := imgui.CurrentIO()
 
 	a := imIO.Fonts()
-	f := a.AddFontFromFileTTF(fontPath, fontSize)
+	f := a.AddFontFromFileTTFV(fontPath, fontSize, fontConfigToUse, glyphRangesToUse)
 	image := a.TextureDataAlpha8()
 
 	gl.BindTexture(gl.TEXTURE_2D, i.texID)
