@@ -28,15 +28,7 @@ func (i *ImguiInfo) FrameStart(winWidth, winHeight float32) {
 
 	imIO := imgui.CurrentIO()
 	imIO.SetDisplaySize(imgui.Vec2{X: float32(winWidth), Y: float32(winHeight)})
-
-	// Setup time step (we don't use SDL_GetTicks() because it is using millisecond resolution)
-	frequency := sdl.GetPerformanceFrequency()
-	currentTime := sdl.GetPerformanceCounter()
-	if timing.ElapsedTime() > 0 {
-		imIO.SetDeltaTime(float32(currentTime-timing.ElapsedTime()) / float32(frequency))
-	} else {
-		imIO.SetDeltaTime(1.0 / 60.0)
-	}
+	imIO.SetDeltaTime(timing.DT())
 
 	imgui.NewFrame()
 }
