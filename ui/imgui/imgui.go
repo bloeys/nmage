@@ -134,6 +134,19 @@ func (i *ImguiInfo) Render(winWidth, winHeight float32, fbWidth, fbHeight int32)
 	gl.Enable(gl.DEPTH_TEST)
 }
 
+func (i *ImguiInfo) SetFontTTF(fontPath string, fontSize float32) {
+
+	imIO := imgui.CurrentIO()
+
+	a := imIO.Fonts()
+	a.AddFontFromFileTTF(fontPath, fontSize)
+	image := a.TextureDataAlpha8()
+
+	gl.BindTexture(gl.TEXTURE_2D, i.texID)
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RED, int32(image.Width), int32(image.Height), 0, gl.RED, gl.UNSIGNED_BYTE, image.Pixels)
+	imIO.Fonts().SetTextureID(imgui.TextureID(i.texID))
+}
+
 func NewImGUI() ImguiInfo {
 
 	imguiInfo := ImguiInfo{
