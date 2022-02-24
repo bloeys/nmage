@@ -1,6 +1,8 @@
 package timing
 
-import "time"
+import (
+	"time"
+)
 
 var (
 	dt         float32 = 0.01
@@ -17,7 +19,11 @@ func FrameStarted() {
 }
 
 func FrameEnded() {
+
 	dt = float32(time.Since(frameStart).Seconds())
+	if dt == 0 {
+		dt = float32(time.Microsecond)
+	}
 }
 
 //DT is frame deltatime in seconds
