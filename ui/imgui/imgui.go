@@ -14,10 +14,10 @@ type ImguiInfo struct {
 	ImCtx *imgui.Context
 
 	Mat        *materials.Material
-	vaoID      uint32
-	vboID      uint32
-	indexBufID uint32
-	texID      uint32
+	VaoID      uint32
+	VboID      uint32
+	IndexBufID uint32
+	TexID      uint32
 }
 
 func (i *ImguiInfo) FrameStart(winWidth, winHeight float32) {
@@ -85,8 +85,8 @@ func (i *ImguiInfo) Render(winWidth, winHeight float32, fbWidth, fbHeight int32)
 	// Recreate the VAO every time
 	// (This is to easily allow multiple GL contexts. VAO are not shared among GL contexts, and
 	// we don't track creation/deletion of windows so we don't have an obvious key to use to cache them.)
-	gl.BindVertexArray(i.vaoID)
-	gl.BindBuffer(gl.ARRAY_BUFFER, i.vboID)
+	gl.BindVertexArray(i.VaoID)
+	gl.BindBuffer(gl.ARRAY_BUFFER, i.VboID)
 
 	vertexSize, vertexOffsetPos, vertexOffsetUv, vertexOffsetCol := imgui.VertexBufferLayout()
 	i.Mat.EnableAttribute("Position")
@@ -106,11 +106,11 @@ func (i *ImguiInfo) Render(winWidth, winHeight float32, fbWidth, fbHeight int32)
 	for _, list := range drawData.CommandLists() {
 
 		vertexBuffer, vertexBufferSize := list.VertexBuffer()
-		gl.BindBuffer(gl.ARRAY_BUFFER, i.vboID)
+		gl.BindBuffer(gl.ARRAY_BUFFER, i.VboID)
 		gl.BufferData(gl.ARRAY_BUFFER, vertexBufferSize, vertexBuffer, gl.STREAM_DRAW)
 
 		indexBuffer, indexBufferSize := list.IndexBuffer()
-		gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, i.indexBufID)
+		gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, i.IndexBufID)
 		gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, indexBufferSize, indexBuffer, gl.STREAM_DRAW)
 
 		for _, cmd := range list.Commands() {
@@ -118,7 +118,7 @@ func (i *ImguiInfo) Render(winWidth, winHeight float32, fbWidth, fbHeight int32)
 				cmd.CallUserCallback(list)
 			} else {
 
-				gl.BindTexture(gl.TEXTURE_2D, i.texID)
+				gl.BindTexture(gl.TEXTURE_2D, i.TexID)
 				clipRect := cmd.ClipRect()
 				gl.Scissor(int32(clipRect.X), int32(fbHeight)-int32(clipRect.W), int32(clipRect.Z-clipRect.X), int32(clipRect.W-clipRect.Y))
 
@@ -152,7 +152,7 @@ func (i *ImguiInfo) AddFontTTF(fontPath string, fontSize float32, fontConfig *im
 	f := a.AddFontFromFileTTFV(fontPath, fontSize, fontConfigToUse, glyphRangesToUse)
 	image := a.TextureDataAlpha8()
 
-	gl.BindTexture(gl.TEXTURE_2D, i.texID)
+	gl.BindTexture(gl.TEXTURE_2D, i.TexID)
 	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RED, int32(image.Width), int32(image.Height), 0, gl.RED, gl.UNSIGNED_BYTE, image.Pixels)
 
 	return f
@@ -168,13 +168,13 @@ func NewImGUI() ImguiInfo {
 	imIO := imgui.CurrentIO()
 	imIO.SetBackendFlags(imIO.GetBackendFlags() | imgui.BackendFlagsRendererHasVtxOffset)
 
-	gl.GenVertexArrays(1, &imguiInfo.vaoID)
-	gl.GenBuffers(1, &imguiInfo.vboID)
-	gl.GenBuffers(1, &imguiInfo.indexBufID)
-	gl.GenTextures(1, &imguiInfo.texID)
+	gl.GenVertexArrays(1, &imguiInfo.VaoID)
+	gl.GenBuffers(1, &imguiInfo.VboID)
+	gl.GenBuffers(1, &imguiInfo.IndexBufID)
+	gl.GenTextures(1, &imguiInfo.TexID)
 
 	// Upload font to gpu
-	gl.BindTexture(gl.TEXTURE_2D, imguiInfo.texID)
+	gl.BindTexture(gl.TEXTURE_2D, imguiInfo.TexID)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 	gl.PixelStorei(gl.UNPACK_ROW_LENGTH, 0)
@@ -183,7 +183,7 @@ func NewImGUI() ImguiInfo {
 	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RED, int32(image.Width), int32(image.Height), 0, gl.RED, gl.UNSIGNED_BYTE, image.Pixels)
 
 	// Store our identifier
-	imIO.Fonts().SetTextureID(imgui.TextureID(imguiInfo.texID))
+	imIO.Fonts().SetTextureID(imgui.TextureID(imguiInfo.TexID))
 
 	//Shader attributes
 	imguiInfo.Mat.Bind()
