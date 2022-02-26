@@ -46,6 +46,7 @@ func Run(g Game) {
 		w.SDLWin.GLSwap()
 
 		g.FrameEnd()
+		w.Rend.FrameEnd()
 		timing.FrameEnded()
 	}
 

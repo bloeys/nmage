@@ -12,7 +12,8 @@ import (
 type Material struct {
 	Name       string
 	ShaderProg shaders.ShaderProgram
-	TexIDs     []uint32
+
+	DiffuseTex uint32
 
 	UnifLocs   map[string]int32
 	AttribLocs map[string]int32
@@ -21,19 +22,17 @@ type Material struct {
 func (m *Material) Bind() {
 
 	gl.UseProgram(m.ShaderProg.ID)
-	for i, v := range m.TexIDs {
-		gl.ActiveTexture(gl.TEXTURE0 + uint32(i))
-		gl.BindTexture(gl.TEXTURE_2D, v)
-	}
+
+	gl.ActiveTexture(gl.TEXTURE0)
+	gl.BindTexture(gl.TEXTURE_2D, m.DiffuseTex)
 }
 
 func (m *Material) UnBind() {
-
 	gl.UseProgram(0)
-	for i := range m.TexIDs {
-		gl.ActiveTexture(gl.TEXTURE0 + uint32(i))
-		gl.BindTexture(gl.TEXTURE_2D, 0)
-	}
+
+	//TODO: Should we unbind textures here? Are these two lines needed?
+	// gl.ActiveTexture(gl.TEXTURE0)
+	// gl.BindTexture(gl.TEXTURE_2D, 0)
 }
 
 func (m *Material) GetAttribLoc(attribName string) int32 {
@@ -77,10 +76,6 @@ func (m *Material) SetAttribute(bufObj buffers.Buffer) {
 
 	bufObj.UnBind()
 	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
-}
-
-func (m *Material) AddTextureID(texID uint32) {
-	m.TexIDs = append(m.TexIDs, texID)
 }
 
 func (m *Material) EnableAttribute(attribName string) {

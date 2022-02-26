@@ -1,7 +1,10 @@
 package engine
 
 import (
+	"runtime"
+
 	"github.com/bloeys/nmage/input"
+	"github.com/bloeys/nmage/renderer"
 	"github.com/bloeys/nmage/timing"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/inkyblackness/imgui-go/v4"
@@ -12,6 +15,7 @@ type Window struct {
 	SDLWin         *sdl.Window
 	GlCtx          sdl.GLContext
 	EventCallbacks []func(sdl.Event)
+	Rend           renderer.Render
 }
 
 func (w *Window) handleInputs() {
@@ -92,6 +96,7 @@ func (w *Window) Destroy() error {
 
 func Init() error {
 
+	runtime.LockOSThread()
 	timing.Init()
 	err := initSDL()
 
@@ -124,15 +129,15 @@ func initSDL() error {
 	return nil
 }
 
-func CreateOpenGLWindow(title string, x, y, width, height int32, flags WindowFlags) (*Window, error) {
-	return createWindow(title, x, y, width, height, WindowFlags_OPENGL|flags)
+func CreateOpenGLWindow(title string, x, y, width, height int32, flags WindowFlags, rend renderer.Render) (*Window, error) {
+	return createWindow(title, x, y, width, height, WindowFlags_OPENGL|flags, rend)
 }
 
-func CreateOpenGLWindowCentered(title string, width, height int32, flags WindowFlags) (*Window, error) {
-	return createWindow(title, -1, -1, width, height, WindowFlags_OPENGL|flags)
+func CreateOpenGLWindowCentered(title string, width, height int32, flags WindowFlags, rend renderer.Render) (*Window, error) {
+	return createWindow(title, -1, -1, width, height, WindowFlags_OPENGL|flags, rend)
 }
 
-func createWindow(title string, x, y, width, height int32, flags WindowFlags) (*Window, error) {
+func createWindow(title string, x, y, width, height int32, flags WindowFlags, rend renderer.Render) (*Window, error) {
 
 	if x == -1 && y == -1 {
 		x = sdl.WINDOWPOS_CENTERED
@@ -143,7 +148,11 @@ func createWindow(title string, x, y, width, height int32, flags WindowFlags) (*
 	if err != nil {
 		return nil, err
 	}
-	win := &Window{SDLWin: sdlWin, EventCallbacks: make([]func(sdl.Event), 0)}
+	win := &Window{
+		SDLWin:         sdlWin,
+		EventCallbacks: make([]func(sdl.Event), 0),
+		Rend:           rend,
+	}
 
 	win.GlCtx, err = sdlWin.GLCreateContext()
 	if err != nil {

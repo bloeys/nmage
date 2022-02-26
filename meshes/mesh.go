@@ -7,18 +7,12 @@ import (
 	"github.com/bloeys/assimp-go/asig"
 	"github.com/bloeys/gglm/gglm"
 	"github.com/bloeys/nmage/asserts"
-	"github.com/bloeys/nmage/assets"
 	"github.com/bloeys/nmage/buffers"
 )
 
 type Mesh struct {
-	Name       string
-	TextureIDs []uint32
-	Buf        buffers.Buffer
-}
-
-func (m *Mesh) AddTexture(tex assets.Texture) {
-	m.TextureIDs = append(m.TextureIDs, tex.TexID)
+	Name string
+	Buf  buffers.Buffer
 }
 
 func NewMesh(name, modelPath string, postProcessFlags asig.PostProcess) (*Mesh, error) {

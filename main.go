@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"runtime"
 
 	"github.com/bloeys/assimp-go/asig"
 	"github.com/bloeys/gglm/gglm"
@@ -12,24 +11,28 @@ import (
 	"github.com/bloeys/nmage/logging"
 	"github.com/bloeys/nmage/materials"
 	"github.com/bloeys/nmage/meshes"
+	"github.com/bloeys/nmage/renderer/rend3dgl"
 	"github.com/bloeys/nmage/timing"
 	nmageimgui "github.com/bloeys/nmage/ui/imgui"
-	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
 //TODO: Tasks:
-//Proper rendering setup
-//Entities and components
-//Camera class
-//Audio
-//Flesh out the material system
+// Build simple game
+// Integrate physx
+// Entities and components
+// Camera class
 
 //Low Priority:
+// Renderer batching
+// Scene graph
+// Separate engine loop from rendering loop? or leave it to the user?
 // Abstract keys enum away from sdl
-// Abstract UI
 // Proper Asset loading
+// Audio
+// Frustum culling
+// Material system editor with fields automatically extracted from the shader
 
 var (
 	isRunning bool = true
@@ -70,14 +73,9 @@ func (g *OurGame) Init() {
 	if err != nil {
 		logging.ErrLog.Fatalln("Failed to load texture. Err: ", err)
 	}
-	cubeMesh.AddTexture(tex)
 
-	//Set mesh textures on material
-	for _, v := range cubeMesh.TextureIDs {
-		simpleMat.AddTextureID(v)
-	}
-
-	//Enable vertex attributes
+	//Configure material
+	simpleMat.DiffuseTex = tex.TexID
 	simpleMat.SetAttribute(cubeMesh.Buf)
 
 	//Movement, scale and rotation
@@ -149,42 +147,23 @@ func (g *OurGame) Update() {
 	imgui.DragFloat3("Cam Pos", &camPos.Data)
 }
 
-var dtAccum float32 = 0
-var lastElapsedTime uint64 = 0
-var framesSinceLastFPSUpdate uint = 0
-
 func (g *OurGame) Render() {
 
-	simpleMat.Bind()
-	cubeMesh.Buf.Bind()
 	tempModelMat := modelMat.Clone()
 
 	rowSize := 100
 	for y := 0; y < rowSize; y++ {
 		for x := 0; x < rowSize; x++ {
-			simpleMat.SetUnifMat4("modelMat", &tempModelMat.Translate(gglm.NewVec3(-1, 0, 0)).Mat4)
-			gl.DrawElements(gl.TRIANGLES, cubeMesh.Buf.IndexBufCount, gl.UNSIGNED_INT, gl.PtrOffset(0))
+			tempModelMat.Translate(gglm.NewVec3(-1, 0, 0))
+			window.Rend.Draw(cubeMesh, tempModelMat, simpleMat)
 		}
-		simpleMat.SetUnifMat4("modelMat", &tempModelMat.Translate(gglm.NewVec3(float32(rowSize), -1, 0)).Mat4)
-	}
-	simpleMat.SetUnifMat4("modelMat", &modelMat.Mat4)
-
-	dtAccum += timing.DT()
-	framesSinceLastFPSUpdate++
-	if timing.ElapsedTime() > lastElapsedTime {
-
-		avgDT := dtAccum / float32(framesSinceLastFPSUpdate)
-		g.GetWindow().SDLWin.SetTitle(fmt.Sprint("nMage (", 1/avgDT, " fps)"))
-
-		dtAccum = 0
-		framesSinceLastFPSUpdate = 0
+		tempModelMat.Translate(gglm.NewVec3(float32(rowSize), -1, 0))
 	}
 
-	lastElapsedTime = timing.ElapsedTime()
+	g.GetWindow().SDLWin.SetTitle(fmt.Sprint("nMage (", timing.GetAvgFPS(), " fps)"))
 }
 
 func (g *OurGame) FrameEnd() {
-
 }
 
 func (g *OurGame) ShouldRun() bool {
@@ -205,8 +184,6 @@ func (g *OurGame) Deinit() {
 
 func main() {
 
-	runtime.LockOSThread()
-
 	//Init engine
 	err := engine.Init()
 	if err != nil {
@@ -214,7 +191,7 @@ func main() {
 	}
 
 	//Create window
-	window, err = engine.CreateOpenGLWindowCentered("nMage", 1280, 720, engine.WindowFlags_RESIZABLE)
+	window, err = engine.CreateOpenGLWindowCentered("nMage", 1280, 720, engine.WindowFlags_RESIZABLE, rend3dgl.NewRend3DGL())
 	if err != nil {
 		logging.ErrLog.Fatalln("Failed to create window. Err: ", err)
 	}
