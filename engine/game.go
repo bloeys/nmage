@@ -23,12 +23,19 @@ type Game interface {
 
 func Run(g Game) {
 
-	g.Init()
-
 	w := g.GetWindow()
 	ui := g.GetImGUI()
+
+	//Simulate an imgui frame during init so any imgui calls are allowed within init
+	tempWidth, tempHeight := w.SDLWin.GetSize()
+	tempFBWidth, tempFBHeight := w.SDLWin.GLGetDrawableSize()
+	ui.FrameStart(float32(tempWidth), float32(tempHeight))
+	g.Init()
+	ui.Render(float32(tempWidth), float32(tempHeight), tempFBWidth, tempFBHeight)
+
 	for g.ShouldRun() {
 
+		//PERF: Cache these
 		width, height := w.SDLWin.GetSize()
 		fbWidth, fbHeight := w.SDLWin.GLGetDrawableSize()
 
