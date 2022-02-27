@@ -98,6 +98,9 @@ func (g *OurGame) Init() {
 	simpleMat.SetUnifVec3("lightColor1", lightColor1)
 }
 
+func (g *OurGame) Start() {
+}
+
 func (g *OurGame) FrameStart() {
 }
 
