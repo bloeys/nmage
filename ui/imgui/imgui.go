@@ -120,7 +120,6 @@ func (i *ImguiInfo) Render(winWidth, winHeight float32, fbWidth, fbHeight int32)
 	}
 
 	//Reset gl state
-	gl.Disable(gl.BLEND)
 	gl.Disable(gl.SCISSOR_TEST)
 	gl.Enable(gl.CULL_FACE)
 	gl.Enable(gl.DEPTH_TEST)
