@@ -178,6 +178,9 @@ func initOpenGL() error {
 	gl.CullFace(gl.BACK)
 	gl.FrontFace(gl.CCW)
 
+	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
 	gl.ClearColor(0, 0, 0, 1)
 	return nil
 }

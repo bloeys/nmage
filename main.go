@@ -18,6 +18,10 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
+//BUGS:
+// need to rebind the texutre if the texture (or any material values) change between draw calls
+// DT handling for when it is zero is wrong! (Gives 1000 DT)
+
 //TODO: Tasks:
 // Build simple game
 // Integrate physx
