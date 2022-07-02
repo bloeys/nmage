@@ -43,7 +43,7 @@ func FrameEnded() {
 	//Calculate new dt
 	dt = float32(time.Since(frameStart).Seconds())
 	if dt == 0 {
-		dt = float32(time.Microsecond)
+		dt = float32(time.Microsecond.Seconds())
 	}
 }
 

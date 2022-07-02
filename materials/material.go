@@ -3,7 +3,6 @@ package materials
 import (
 	"github.com/bloeys/gglm/gglm"
 	"github.com/bloeys/nmage/asserts"
-	"github.com/bloeys/nmage/buffers"
 	"github.com/bloeys/nmage/logging"
 	"github.com/bloeys/nmage/shaders"
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -59,23 +58,6 @@ func (m *Material) GetUnifLoc(uniformName string) int32 {
 	asserts.T(loc != -1, "Uniform '"+uniformName+"' doesn't exist on material "+m.Name)
 	m.UnifLocs[uniformName] = loc
 	return loc
-}
-
-func (m *Material) SetAttribute(bufObj buffers.Buffer) {
-
-	bufObj.Bind()
-
-	//NOTE: VBOs are only bound at 'VertexAttribPointer', not BindBUffer, so we need to bind the buffer and vao here
-	gl.BindBuffer(gl.ARRAY_BUFFER, bufObj.BufID)
-
-	layout := bufObj.GetLayout()
-	for i := 0; i < len(layout); i++ {
-		gl.EnableVertexAttribArray(uint32(i))
-		gl.VertexAttribPointer(uint32(i), layout[i].ElementType.CompCount(), layout[i].ElementType.GLType(), false, bufObj.Stride, gl.PtrOffset(layout[i].Offset))
-	}
-
-	bufObj.UnBind()
-	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 }
 
 func (m *Material) EnableAttribute(attribName string) {

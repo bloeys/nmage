@@ -18,15 +18,6 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-//BUGS:
-// need to rebind the texutre if the texture (or any material values) change between draw calls
-// DT handling for when it is zero is wrong! (Gives 1000 DT)
-
-//nMage TODO:
-//	* Allow texture loading without cache
-//	* Move SetAttribute away from material struct
-//	* Create VAO struct independent from VBO to support multi-VBO use cases (e.g. instancing)
-
 //TODO: Tasks:
 // Build simple game
 // Integrate physx
@@ -34,6 +25,7 @@ import (
 // Camera class
 
 //Low Priority:
+// Create VAO struct independent from VBO to support multi-VBO use cases (e.g. instancing)
 // Renderer batching
 // Scene graph
 // Separate engine loop from rendering loop? or leave it to the user?
@@ -76,14 +68,13 @@ func (g *OurGame) Init() {
 	}
 
 	//Load textures
-	tex, err := assets.LoadPNGTexture("./res/textures/Low poly planet.png")
+	tex, err := assets.LoadPNGTexture("./res/textures/Low poly planet.png", nil)
 	if err != nil {
 		logging.ErrLog.Fatalln("Failed to load texture. Err: ", err)
 	}
 
 	//Configure material
 	simpleMat.DiffuseTex = tex.TexID
-	simpleMat.SetAttribute(cubeMesh.Buf)
 
 	//Movement, scale and rotation
 	translationMat := gglm.NewTranslationMat(gglm.NewVec3(0, 0, 0))

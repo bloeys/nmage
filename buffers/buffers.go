@@ -54,6 +54,8 @@ func (b *Buffer) GetLayout() []Element {
 	return e
 }
 
+//SetLayout updates the layout object and the corresponding vertex attributes.
+//Vertex attributes are also enabled.
 func (b *Buffer) SetLayout(layout ...Element) {
 
 	b.layout = layout
@@ -64,6 +66,20 @@ func (b *Buffer) SetLayout(layout ...Element) {
 		b.layout[i].Offset = int(b.Stride)
 		b.Stride += b.layout[i].Size()
 	}
+
+	//Set opengl stuff
+	b.Bind()
+
+	//NOTE: VBOs are only bound at 'VertexAttribPointer', not BindBUffer, so we need to bind the buffer and vao here
+	gl.BindBuffer(gl.ARRAY_BUFFER, b.BufID)
+
+	for i := 0; i < len(layout); i++ {
+		gl.EnableVertexAttribArray(uint32(i))
+		gl.VertexAttribPointer(uint32(i), layout[i].ElementType.CompCount(), layout[i].ElementType.GLType(), false, b.Stride, gl.PtrOffset(layout[i].Offset))
+	}
+
+	b.UnBind()
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 }
 
 func NewBuffer(layout ...Element) Buffer {

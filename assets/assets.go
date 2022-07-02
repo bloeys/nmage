@@ -5,7 +5,7 @@ var (
 	TexturePaths map[string]uint32  = make(map[string]uint32)
 )
 
-func SetTexture(t Texture) {
+func AddTextureToCache(t Texture) {
 
 	if _, ok := TexturePaths[t.Path]; ok {
 		return
@@ -16,12 +16,12 @@ func SetTexture(t Texture) {
 	TexturePaths[t.Path] = t.TexID
 }
 
-func GetTexture(texID uint32) (Texture, bool) {
+func GetTextureFromCacheID(texID uint32) (Texture, bool) {
 	tex, ok := Textures[texID]
 	return tex, ok
 }
 
-func GetTexturePath(path string) (Texture, bool) {
+func GetTextureFromCachePath(path string) (Texture, bool) {
 	tex, ok := Textures[TexturePaths[path]]
 	return tex, ok
 }
