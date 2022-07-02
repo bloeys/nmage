@@ -22,6 +22,11 @@ import (
 // need to rebind the texutre if the texture (or any material values) change between draw calls
 // DT handling for when it is zero is wrong! (Gives 1000 DT)
 
+//nMage TODO:
+//	* Allow texture loading without cache
+//	* Move SetAttribute away from material struct
+//	* Create VAO struct independent from VBO to support multi-VBO use cases (e.g. instancing)
+
 //TODO: Tasks:
 // Build simple game
 // Integrate physx
@@ -39,8 +44,7 @@ import (
 // Material system editor with fields automatically extracted from the shader
 
 var (
-	isRunning bool = true
-	window    *engine.Window
+	window *engine.Window
 
 	simpleMat *materials.Material
 	cubeMesh  *meshes.Mesh
@@ -57,7 +61,6 @@ var (
 type OurGame struct {
 	Win       *engine.Window
 	ImGUIInfo nmageimgui.ImguiInfo
-	Quitting  bool
 }
 
 func (g *OurGame) Init() {
@@ -102,16 +105,10 @@ func (g *OurGame) Init() {
 	simpleMat.SetUnifVec3("lightColor1", lightColor1)
 }
 
-func (g *OurGame) Start() {
-}
-
-func (g *OurGame) FrameStart() {
-}
-
 func (g *OurGame) Update() {
 
 	if input.IsQuitClicked() {
-		g.Quitting = true
+		engine.Quit()
 	}
 
 	winWidth, winHeight := g.Win.SDLWin.GetSize()
@@ -167,25 +164,13 @@ func (g *OurGame) Render() {
 		tempModelMat.Translate(gglm.NewVec3(float32(rowSize), -1, 0))
 	}
 
-	g.GetWindow().SDLWin.SetTitle(fmt.Sprint("nMage (", timing.GetAvgFPS(), " fps)"))
+	g.Win.SDLWin.SetTitle(fmt.Sprint("nMage (", timing.GetAvgFPS(), " fps)"))
 }
 
 func (g *OurGame) FrameEnd() {
 }
 
-func (g *OurGame) ShouldRun() bool {
-	return !g.Quitting
-}
-
-func (g *OurGame) GetWindow() *engine.Window {
-	return g.Win
-}
-
-func (g *OurGame) GetImGUI() nmageimgui.ImguiInfo {
-	return g.ImGUIInfo
-}
-
-func (g *OurGame) Deinit() {
+func (g *OurGame) DeInit() {
 	g.Win.Destroy()
 }
 
@@ -211,8 +196,7 @@ func main() {
 		ImGUIInfo: nmageimgui.NewImGUI(),
 	}
 
-	engine.Run(game)
-	return
+	engine.Run(game, window, game.ImGUIInfo)
 }
 
 func updateViewMat() {

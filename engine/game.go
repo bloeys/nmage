@@ -6,37 +6,32 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
+var (
+	isRunning = false
+)
+
 type Game interface {
 	Init()
-	Start()
 
-	FrameStart()
 	Update()
 	Render()
 	FrameEnd()
-	ShouldRun() bool
 
-	GetWindow() *Window
-	GetImGUI() nmageimgui.ImguiInfo
-
-	Deinit()
+	DeInit()
 }
 
-func Run(g Game) {
+func Run(g Game, w *Window, ui nmageimgui.ImguiInfo) {
 
-	w := g.GetWindow()
-	ui := g.GetImGUI()
-
+	isRunning = true
 	g.Init()
 
 	//Simulate an imgui frame during init so any imgui calls are allowed within init
 	tempWidth, tempHeight := w.SDLWin.GetSize()
 	tempFBWidth, tempFBHeight := w.SDLWin.GLGetDrawableSize()
 	ui.FrameStart(float32(tempWidth), float32(tempHeight))
-	g.Start()
 	ui.Render(float32(tempWidth), float32(tempHeight), tempFBWidth, tempFBHeight)
 
-	for g.ShouldRun() {
+	for isRunning {
 
 		//PERF: Cache these
 		width, height := w.SDLWin.GetSize()
@@ -45,8 +40,6 @@ func Run(g Game) {
 		timing.FrameStarted()
 		w.handleInputs()
 		ui.FrameStart(float32(width), float32(height))
-
-		g.FrameStart()
 
 		g.Update()
 
@@ -60,5 +53,9 @@ func Run(g Game) {
 		timing.FrameEnded()
 	}
 
-	g.Deinit()
+	g.DeInit()
+}
+
+func Quit() {
+	isRunning = false
 }

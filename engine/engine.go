@@ -3,12 +3,17 @@ package engine
 import (
 	"runtime"
 
+	"github.com/bloeys/nmage/asserts"
 	"github.com/bloeys/nmage/input"
 	"github.com/bloeys/nmage/renderer"
 	"github.com/bloeys/nmage/timing"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/veandco/go-sdl2/sdl"
+)
+
+var (
+	isInited = false
 )
 
 type Window struct {
@@ -96,6 +101,8 @@ func (w *Window) Destroy() error {
 
 func Init() error {
 
+	isInited = true
+
 	runtime.LockOSThread()
 	timing.Init()
 	err := initSDL()
@@ -139,6 +146,7 @@ func CreateOpenGLWindowCentered(title string, width, height int32, flags WindowF
 
 func createWindow(title string, x, y, width, height int32, flags WindowFlags, rend renderer.Render) (*Window, error) {
 
+	asserts.T(isInited, "engine.Init was not called!")
 	if x == -1 && y == -1 {
 		x = sdl.WINDOWPOS_CENTERED
 		y = sdl.WINDOWPOS_CENTERED
@@ -186,6 +194,8 @@ func initOpenGL() error {
 }
 
 func SetVSync(enabled bool) {
+	asserts.T(isInited, "engine.Init was not called!")
+
 	if enabled {
 		sdl.GLSetSwapInterval(1)
 	} else {
