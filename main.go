@@ -19,10 +19,9 @@ import (
 )
 
 //TODO: Tasks:
-// Build simple game
-// Integrate physx
-// Entities and components
 // Camera class
+// Entities and components
+// Integrate physx
 
 //Low Priority:
 // Create VAO struct independent from VBO to support multi-VBO use cases (e.g. instancing)
@@ -31,7 +30,6 @@ import (
 // Separate engine loop from rendering loop? or leave it to the user?
 // Abstract keys enum away from sdl
 // Proper Asset loading
-// Audio
 // Frustum culling
 // Material system editor with fields automatically extracted from the shader
 
@@ -58,7 +56,7 @@ type OurGame struct {
 func (g *OurGame) Init() {
 
 	//Create materials
-	simpleMat = materials.NewMaterial("Simple Mat", "./res/shaders/simple")
+	simpleMat = materials.NewMaterial("Simple Mat", "./res/shaders/simple.glsl")
 
 	//Load meshes
 	var err error
@@ -98,7 +96,7 @@ func (g *OurGame) Init() {
 
 func (g *OurGame) Update() {
 
-	if input.IsQuitClicked() {
+	if input.IsQuitClicked() || input.KeyClicked(sdl.K_ESCAPE) {
 		engine.Quit()
 	}
 

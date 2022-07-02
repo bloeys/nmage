@@ -106,24 +106,20 @@ func (m *Material) Delete() {
 
 func NewMaterial(matName, shaderPath string) *Material {
 
-	shdrProg, err := shaders.NewShaderProgram()
+	shdrProg, err := shaders.LoadAndCompileCombinedShader(shaderPath)
 	if err != nil {
-		logging.ErrLog.Fatalln("Failed to create new shader program. Err: ", err)
+		logging.ErrLog.Fatalln("Failed to create new material. Err: ", err)
 	}
 
-	vertShader, err := shaders.LoadAndCompilerShader(shaderPath+".vert.glsl", shaders.VertexShaderType)
-	if err != nil {
-		logging.ErrLog.Fatalln("Failed to load and create vertex shader. Err: ", err)
-	}
+	return &Material{Name: matName, ShaderProg: shdrProg, UnifLocs: make(map[string]int32), AttribLocs: make(map[string]int32)}
+}
 
-	fragShader, err := shaders.LoadAndCompilerShader(shaderPath+".frag.glsl", shaders.FragmentShaderType)
-	if err != nil {
-		logging.ErrLog.Fatalln("Failed to load and create fragment shader. Err: ", err)
-	}
+func NewMaterialSrc(matName string, shaderSrc []byte) *Material {
 
-	shdrProg.AttachShader(vertShader)
-	shdrProg.AttachShader(fragShader)
-	shdrProg.Link()
+	shdrProg, err := shaders.LoadAndCompileCombinedShaderSrc(shaderSrc)
+	if err != nil {
+		logging.ErrLog.Fatalln("Failed to create new material. Err: ", err)
+	}
 
 	return &Material{Name: matName, ShaderProg: shdrProg, UnifLocs: make(map[string]int32), AttribLocs: make(map[string]int32)}
 }
