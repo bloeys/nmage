@@ -66,7 +66,7 @@ func (g *OurGame) Init() {
 	}
 
 	//Load textures
-	tex, err := assets.LoadPNGTexture("./res/textures/Low poly planet.png", nil)
+	tex, err := assets.LoadTexturePNG("./res/textures/Low poly planet.png", nil)
 	if err != nil {
 		logging.ErrLog.Fatalln("Failed to load texture. Err: ", err)
 	}

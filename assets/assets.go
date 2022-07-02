@@ -7,12 +7,17 @@ var (
 
 func AddTextureToCache(t Texture) {
 
-	if _, ok := TexturePaths[t.Path]; ok {
+	if t.Path != "" {
+		if _, ok := TexturePaths[t.Path]; ok {
+			return
+		}
+		println("Loaded texture from path:", t.Path)
+		Textures[t.TexID] = t
+		TexturePaths[t.Path] = t.TexID
 		return
 	}
 
-	println("Loaded texture:", t.Path)
-	Textures[t.TexID] = t
+	println("Loaded in-mem texture with ID:", t.TexID)
 	TexturePaths[t.Path] = t.TexID
 }
 

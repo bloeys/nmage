@@ -2,6 +2,7 @@ package assets
 
 import (
 	"bytes"
+	"image"
 	"image/color"
 	"image/png"
 	"os"
@@ -17,6 +18,7 @@ const (
 )
 
 type Texture struct {
+	//Path only exists for textures loaded from disk
 	Path   string
 	TexID  uint32
 	Width  int32
@@ -30,7 +32,7 @@ type TextureLoadOptions struct {
 	GenMipMaps       bool
 }
 
-func LoadPNGTexture(file string, loadOptions *TextureLoadOptions) (Texture, error) {
+func LoadTexturePNG(file string, loadOptions *TextureLoadOptions) (Texture, error) {
 
 	if loadOptions == nil {
 		loadOptions = &TextureLoadOptions{}
@@ -55,6 +57,59 @@ func LoadPNGTexture(file string, loadOptions *TextureLoadOptions) (Texture, erro
 
 	tex := Texture{
 		Path:   file,
+		Width:  int32(img.Bounds().Dx()),
+		Height: int32(img.Bounds().Dy()),
+		Pixels: make([]byte, img.Bounds().Dx()*img.Bounds().Dy()*4),
+	}
+
+	//NOTE: Load bottom left to top right because this is the texture coordinate system used by OpenGL
+	//NOTE: We only support 8-bit channels (32-bit colors) for now
+	i := 0
+	for y := img.Bounds().Dy() - 1; y >= 0; y-- {
+		for x := 0; x < img.Bounds().Dx(); x++ {
+
+			c := color.NRGBAModel.Convert(img.At(x, y)).(color.NRGBA)
+
+			tex.Pixels[i] = c.R
+			tex.Pixels[i+1] = c.G
+			tex.Pixels[i+2] = c.B
+			tex.Pixels[i+3] = c.A
+
+			i += 4
+		}
+	}
+
+	//Prepare opengl stuff
+	gl.GenTextures(1, &tex.TexID)
+	gl.BindTexture(gl.TEXTURE_2D, tex.TexID)
+
+	// set the texture wrapping/filtering options (on the currently bound texture object)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+
+	// load and generate the texture
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, tex.Width, tex.Height, 0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&tex.Pixels[0]))
+
+	if loadOptions.GenMipMaps {
+		gl.GenerateMipmap(tex.TexID)
+	}
+
+	if loadOptions.WriteToCache {
+		AddTextureToCache(tex)
+	}
+
+	return tex, nil
+}
+
+func LoadTextureInMemImg(img image.Image, loadOptions *TextureLoadOptions) (Texture, error) {
+
+	if loadOptions == nil {
+		loadOptions = &TextureLoadOptions{}
+	}
+
+	tex := Texture{
 		Width:  int32(img.Bounds().Dx()),
 		Height: int32(img.Bounds().Dy()),
 		Pixels: make([]byte, img.Bounds().Dx()*img.Bounds().Dy()*4),
