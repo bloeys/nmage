@@ -22,8 +22,6 @@ import (
 // Camera class
 // Entities and components
 // Integrate physx
-
-//Low Priority:
 // Create VAO struct independent from VBO to support multi-VBO use cases (e.g. instancing)
 // Renderer batching
 // Scene graph
