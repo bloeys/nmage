@@ -30,7 +30,12 @@ func (b *Buffer) SetData(values []float32) {
 	gl.BindVertexArray(b.VAOID)
 	gl.BindBuffer(gl.ARRAY_BUFFER, b.BufID)
 
-	gl.BufferData(gl.ARRAY_BUFFER, len(values)*4, gl.Ptr(values), BufUsage_Static.ToGL())
+	sizeInBytes := len(values) * 4
+	if sizeInBytes == 0 {
+		gl.BufferData(gl.ARRAY_BUFFER, 0, gl.Ptr(nil), BufUsage_Static.ToGL())
+	} else {
+		gl.BufferData(gl.ARRAY_BUFFER, sizeInBytes, gl.Ptr(&values[0]), BufUsage_Static.ToGL())
+	}
 
 	gl.BindVertexArray(0)
 	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
@@ -42,7 +47,12 @@ func (b *Buffer) SetIndexBufData(values []uint32) {
 	gl.BindVertexArray(b.VAOID)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, b.IndexBufID)
 
-	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(values)*4, gl.Ptr(values), BufUsage_Static.ToGL())
+	sizeInBytes := len(values) * 4
+	if sizeInBytes == 0 {
+		gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, 0, gl.Ptr(nil), BufUsage_Static.ToGL())
+	} else {
+		gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, sizeInBytes, gl.Ptr(&values[0]), BufUsage_Static.ToGL())
+	}
 
 	gl.BindVertexArray(0)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
