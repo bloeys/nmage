@@ -41,6 +41,22 @@ func (b *Buffer) SetData(values []float32) {
 	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 }
 
+func (b *Buffer) SetDataWithUsage(values []float32, usage BufUsage) {
+
+	gl.BindVertexArray(b.VAOID)
+	gl.BindBuffer(gl.ARRAY_BUFFER, b.BufID)
+
+	sizeInBytes := len(values) * 4
+	if sizeInBytes == 0 {
+		gl.BufferData(gl.ARRAY_BUFFER, 0, gl.Ptr(nil), usage.ToGL())
+	} else {
+		gl.BufferData(gl.ARRAY_BUFFER, sizeInBytes, gl.Ptr(&values[0]), usage.ToGL())
+	}
+
+	gl.BindVertexArray(0)
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
+}
+
 func (b *Buffer) SetIndexBufData(values []uint32) {
 
 	b.IndexBufCount = int32(len(values))
