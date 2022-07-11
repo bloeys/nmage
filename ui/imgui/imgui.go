@@ -66,8 +66,7 @@ func (i *ImguiInfo) Render(winWidth, winHeight float32, fbWidth, fbHeight int32)
 	// DisplayMin is typically (0,0) for single viewport apps.
 
 	i.Mat.Bind()
-
-	gl.Uniform1i(gl.GetUniformLocation(i.Mat.ShaderProg.ID, gl.Str("Texture\x00")), 0)
+	i.Mat.SetUnifInt32("Texture", 0)
 
 	//PERF: only update the ortho matrix on window resize
 	orthoMat := gglm.Ortho(0, float32(winWidth), 0, float32(winHeight), 0, 20)
