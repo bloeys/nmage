@@ -6,7 +6,7 @@ import (
 
 	"github.com/bloeys/assimp-go/asig"
 	"github.com/bloeys/gglm/gglm"
-	"github.com/bloeys/nmage/asserts"
+	"github.com/bloeys/nmage/assert"
 	"github.com/bloeys/nmage/buffers"
 )
 
@@ -31,7 +31,7 @@ func NewMesh(name, modelPath string, postProcessFlags asig.PostProcess) (*Mesh, 
 	sceneMesh := scene.Meshes[0]
 	mesh.Buf = buffers.NewBuffer()
 
-	asserts.T(len(sceneMesh.TexCoords[0]) > 0, "Mesh has no UV0")
+	assert.T(len(sceneMesh.TexCoords[0]) > 0, "Mesh has no UV0")
 	layoutToUse := []buffers.Element{{ElementType: buffers.DataTypeVec3}, {ElementType: buffers.DataTypeVec3}, {ElementType: buffers.DataTypeVec2}}
 
 	if len(sceneMesh.ColorSets) > 0 && len(sceneMesh.ColorSets[0]) > 0 {
@@ -73,9 +73,9 @@ type arrToInterleave struct {
 
 func (a *arrToInterleave) get(i int) []float32 {
 
-	asserts.T(len(a.V2s) == 0 || len(a.V3s) == 0, "One array should be set in arrToInterleave, but both arrays are set")
-	asserts.T(len(a.V2s) == 0 || len(a.V4s) == 0, "One array should be set in arrToInterleave, but both arrays are set")
-	asserts.T(len(a.V3s) == 0 || len(a.V4s) == 0, "One array should be set in arrToInterleave, but both arrays are set")
+	assert.T(len(a.V2s) == 0 || len(a.V3s) == 0, "One array should be set in arrToInterleave, but both arrays are set")
+	assert.T(len(a.V2s) == 0 || len(a.V4s) == 0, "One array should be set in arrToInterleave, but both arrays are set")
+	assert.T(len(a.V3s) == 0 || len(a.V4s) == 0, "One array should be set in arrToInterleave, but both arrays are set")
 
 	if len(a.V2s) > 0 {
 		return a.V2s[i].Data[:]
@@ -88,8 +88,8 @@ func (a *arrToInterleave) get(i int) []float32 {
 
 func interleave(arrs ...arrToInterleave) []float32 {
 
-	asserts.T(len(arrs) > 0, "No input sent to interleave")
-	asserts.T(len(arrs[0].V2s) > 0 || len(arrs[0].V3s) > 0 || len(arrs[0].V4s) > 0, "Interleave arrays are empty")
+	assert.T(len(arrs) > 0, "No input sent to interleave")
+	assert.T(len(arrs[0].V2s) > 0 || len(arrs[0].V3s) > 0 || len(arrs[0].V4s) > 0, "Interleave arrays are empty")
 
 	elementCount := 0
 	if len(arrs[0].V2s) > 0 {
@@ -104,7 +104,7 @@ func interleave(arrs ...arrToInterleave) []float32 {
 	totalSize := 0
 	for i := 0; i < len(arrs); i++ {
 
-		asserts.T(len(arrs[i].V2s) == elementCount || len(arrs[i].V3s) == elementCount || len(arrs[i].V4s) == elementCount, "Mesh vertex data given to interleave is not the same length")
+		assert.T(len(arrs[i].V2s) == elementCount || len(arrs[i].V3s) == elementCount || len(arrs[i].V4s) == elementCount, "Mesh vertex data given to interleave is not the same length")
 
 		if len(arrs[i].V2s) > 0 {
 			totalSize += len(arrs[i].V2s) * 2
@@ -152,7 +152,7 @@ func flattenVec4(vec4s []gglm.Vec4) []float32 {
 
 func flattenFaces(faces []asig.Face) []uint32 {
 
-	asserts.T(len(faces[0].Indices) == 3, fmt.Sprintf("Face doesn't have 3 indices. Index count: %v\n", len(faces[0].Indices)))
+	assert.T(len(faces[0].Indices) == 3, fmt.Sprintf("Face doesn't have 3 indices. Index count: %v\n", len(faces[0].Indices)))
 
 	uints := make([]uint32, len(faces)*3)
 	for i := 0; i < len(faces); i++ {

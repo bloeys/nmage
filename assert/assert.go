@@ -1,4 +1,4 @@
-package asserts
+package assert
 
 import (
 	"github.com/bloeys/nmage/consts"

@@ -3,7 +3,7 @@ package buffers
 import (
 	"fmt"
 
-	"github.com/bloeys/nmage/asserts"
+	"github.com/bloeys/nmage/assert"
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
@@ -28,6 +28,6 @@ func (b BufUsage) ToGL() uint32 {
 		return gl.STREAM_DRAW
 	}
 
-	asserts.T(false, fmt.Sprintf("Unexpected BufUsage value '%v'", b))
+	assert.T(false, fmt.Sprintf("Unexpected BufUsage value '%v'", b))
 	return 0
 }

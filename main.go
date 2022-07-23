@@ -6,6 +6,7 @@ import (
 	"github.com/bloeys/assimp-go/asig"
 	"github.com/bloeys/gglm/gglm"
 	"github.com/bloeys/nmage/assets"
+	"github.com/bloeys/nmage/camera"
 	"github.com/bloeys/nmage/engine"
 	"github.com/bloeys/nmage/input"
 	"github.com/bloeys/nmage/logging"
@@ -18,8 +19,7 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-//TODO: Tasks:
-// Camera class
+// @Todo:
 // Entities and components
 // Integrate physx
 // Create VAO struct independent from VBO to support multi-VBO use cases (e.g. instancing)
@@ -34,13 +34,12 @@ import (
 var (
 	window *engine.Window
 
+	cam *camera.Camera
+
 	simpleMat *materials.Material
 	cubeMesh  *meshes.Mesh
 
-	modelMat   = gglm.NewTrMatId()
-	projMat    = &gglm.Mat4{}
-	camPos     = gglm.NewVec3(0, 0, -10)
-	camForward = gglm.NewVec3(0, 0, 1)
+	modelMat = gglm.NewTrMatId()
 
 	lightPos1   = gglm.NewVec3(2, 2, 0)
 	lightColor1 = gglm.NewVec3(1, 1, 1)
@@ -49,6 +48,48 @@ var (
 type OurGame struct {
 	Win       *engine.Window
 	ImGUIInfo nmageimgui.ImguiInfo
+}
+
+func main() {
+
+	//Init engine
+	err := engine.Init()
+	if err != nil {
+		logging.ErrLog.Fatalln("Failed to init nMage. Err:", err)
+	}
+
+	//Create window
+	window, err = engine.CreateOpenGLWindowCentered("nMage", 1280, 720, engine.WindowFlags_RESIZABLE, rend3dgl.NewRend3DGL())
+	if err != nil {
+		logging.ErrLog.Fatalln("Failed to create window. Err: ", err)
+	}
+	defer window.Destroy()
+
+	engine.SetVSync(false)
+
+	game := &OurGame{
+		Win:       window,
+		ImGUIInfo: nmageimgui.NewImGUI(),
+	}
+	window.EventCallbacks = append(window.EventCallbacks, game.handleWindowEvents)
+
+	engine.Run(game, window, game.ImGUIInfo)
+}
+
+func (g *OurGame) handleWindowEvents(e sdl.Event) {
+
+	switch e := e.(type) {
+	case *sdl.WindowEvent:
+		if e.Event == sdl.WINDOWEVENT_SIZE_CHANGED {
+
+			width := e.Data1
+			height := e.Data2
+			cam.AspectRatio = float32(width) / float32(height)
+			cam.Update()
+
+			simpleMat.SetUnifMat4("projMat", &cam.ProjMat)
+		}
+	}
 }
 
 func (g *OurGame) Init() {
@@ -80,16 +121,24 @@ func (g *OurGame) Init() {
 	modelMat.Mul(translationMat.Mul(rotMat.Mul(scaleMat)))
 	simpleMat.SetUnifMat4("modelMat", &modelMat.Mat4)
 
-	//Moves objects into the cameras view
-	updateViewMat()
+	// Camera
+	winWidth, winHeight := g.Win.SDLWin.GetSize()
+	cam = camera.NewPerspective(
+		gglm.NewVec3(0, 0, -10),
+		gglm.NewVec3(0, 0, -9),
+		gglm.NewVec3(0, 1, 0),
+		0.1, 20,
+		45*gglm.Deg2Rad,
+		float32(winWidth)/float32(winHeight),
+	)
+	simpleMat.SetUnifMat4("projMat", &cam.ProjMat)
 
-	//Perspective/Depth
-	projMat := gglm.Perspective(45*gglm.Deg2Rad, float32(1280)/float32(720), 0.1, 500)
-	simpleMat.SetUnifMat4("projMat", projMat)
+	updateViewMat()
 
 	//Lights
 	simpleMat.SetUnifVec3("lightPos1", lightPos1)
 	simpleMat.SetUnifVec3("lightColor1", lightColor1)
+
 }
 
 func (g *OurGame) Update() {
@@ -98,34 +147,30 @@ func (g *OurGame) Update() {
 		engine.Quit()
 	}
 
-	winWidth, winHeight := g.Win.SDLWin.GetSize()
-	projMat = gglm.Perspective(45*gglm.Deg2Rad, float32(winWidth)/float32(winHeight), 0.1, 20)
-	simpleMat.SetUnifMat4("projMat", projMat)
-
 	//Camera movement
 	var camSpeed float32 = 15
 	if input.KeyDown(sdl.K_w) {
-		camPos.Data[1] += camSpeed * timing.DT()
+		cam.Pos.AddY(camSpeed * timing.DT())
 		updateViewMat()
 	}
 	if input.KeyDown(sdl.K_s) {
-		camPos.Data[1] -= camSpeed * timing.DT()
+		cam.Pos.AddY(-camSpeed * timing.DT())
 		updateViewMat()
 	}
 	if input.KeyDown(sdl.K_d) {
-		camPos.Data[0] += camSpeed * timing.DT()
+		cam.Pos.AddX(camSpeed * timing.DT())
 		updateViewMat()
 	}
 	if input.KeyDown(sdl.K_a) {
-		camPos.Data[0] -= camSpeed * timing.DT()
+		cam.Pos.AddX(-camSpeed * timing.DT())
 		updateViewMat()
 	}
 
 	if input.GetMouseWheelYNorm() > 0 {
-		camPos.Data[2] += 1
+		cam.Pos.AddZ(1)
 		updateViewMat()
 	} else if input.GetMouseWheelYNorm() < 0 {
-		camPos.Data[2] -= 1
+		cam.Pos.AddZ(-1)
 		updateViewMat()
 	}
 
@@ -135,7 +180,7 @@ func (g *OurGame) Update() {
 		simpleMat.SetUnifMat4("modelMat", &modelMat.Mat4)
 	}
 
-	imgui.DragFloat3("Cam Pos", &camPos.Data)
+	imgui.DragFloat3("Cam Pos", &cam.Pos.Data)
 }
 
 func (g *OurGame) Render() {
@@ -161,33 +206,11 @@ func (g *OurGame) DeInit() {
 	g.Win.Destroy()
 }
 
-func main() {
-
-	//Init engine
-	err := engine.Init()
-	if err != nil {
-		logging.ErrLog.Fatalln("Failed to init nMage. Err:", err)
-	}
-
-	//Create window
-	window, err = engine.CreateOpenGLWindowCentered("nMage", 1280, 720, engine.WindowFlags_RESIZABLE, rend3dgl.NewRend3DGL())
-	if err != nil {
-		logging.ErrLog.Fatalln("Failed to create window. Err: ", err)
-	}
-	defer window.Destroy()
-
-	engine.SetVSync(false)
-
-	game := &OurGame{
-		Win:       window,
-		ImGUIInfo: nmageimgui.NewImGUI(),
-	}
-
-	engine.Run(game, window, game.ImGUIInfo)
-}
-
 func updateViewMat() {
-	targetPos := camPos.Clone().Add(camForward)
-	viewMat := gglm.LookAt(camPos, targetPos, gglm.NewVec3(0, 1, 0))
-	simpleMat.SetUnifMat4("viewMat", &viewMat.Mat4)
+	target := cam.Pos.Clone()
+	target.AddZ(1)
+	cam.Target = *target
+	cam.Update()
+
+	simpleMat.SetUnifMat4("viewMat", &cam.ViewMat)
 }

@@ -3,7 +3,7 @@ package buffers
 import (
 	"fmt"
 
-	"github.com/bloeys/nmage/asserts"
+	"github.com/bloeys/nmage/assert"
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
@@ -45,7 +45,7 @@ func (dt ElementType) GLType() uint32 {
 		return gl.FLOAT
 
 	default:
-		asserts.T(false, fmt.Sprintf("Unknown data type passed. DataType '%v'", dt))
+		assert.T(false, fmt.Sprintf("Unknown data type passed. DataType '%v'", dt))
 		return 0
 	}
 }
@@ -68,7 +68,7 @@ func (dt ElementType) CompSize() int32 {
 		return 4
 
 	default:
-		asserts.T(false, fmt.Sprintf("Unknown data type passed. DataType '%v'", dt))
+		assert.T(false, fmt.Sprintf("Unknown data type passed. DataType '%v'", dt))
 		return 0
 	}
 }
@@ -92,7 +92,7 @@ func (dt ElementType) CompCount() int32 {
 		return 4
 
 	default:
-		asserts.T(false, fmt.Sprintf("Unknown data type passed. DataType '%v'", dt))
+		assert.T(false, fmt.Sprintf("Unknown data type passed. DataType '%v'", dt))
 		return 0
 	}
 }
@@ -116,7 +116,7 @@ func (dt ElementType) Size() int32 {
 		return 4 * 4
 
 	default:
-		asserts.T(false, fmt.Sprintf("Unknown data type passed. DataType '%v'", dt))
+		assert.T(false, fmt.Sprintf("Unknown data type passed. DataType '%v'", dt))
 		return 0
 	}
 }

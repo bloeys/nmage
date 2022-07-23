@@ -2,7 +2,7 @@ package materials
 
 import (
 	"github.com/bloeys/gglm/gglm"
-	"github.com/bloeys/nmage/asserts"
+	"github.com/bloeys/nmage/assert"
 	"github.com/bloeys/nmage/logging"
 	"github.com/bloeys/nmage/shaders"
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -42,7 +42,7 @@ func (m *Material) GetAttribLoc(attribName string) int32 {
 	}
 
 	loc = gl.GetAttribLocation(m.ShaderProg.ID, gl.Str(attribName+"\x00"))
-	asserts.T(loc != -1, "Attribute '"+attribName+"' doesn't exist on material "+m.Name)
+	assert.T(loc != -1, "Attribute '"+attribName+"' doesn't exist on material "+m.Name)
 	m.AttribLocs[attribName] = loc
 	return loc
 }
@@ -55,7 +55,7 @@ func (m *Material) GetUnifLoc(uniformName string) int32 {
 	}
 
 	loc = gl.GetUniformLocation(m.ShaderProg.ID, gl.Str(uniformName+"\x00"))
-	asserts.T(loc != -1, "Uniform '"+uniformName+"' doesn't exist on material "+m.Name)
+	assert.T(loc != -1, "Uniform '"+uniformName+"' doesn't exist on material "+m.Name)
 	m.UnifLocs[uniformName] = loc
 	return loc
 }

@@ -2,7 +2,7 @@ package nmageimgui
 
 import (
 	"github.com/bloeys/gglm/gglm"
-	"github.com/bloeys/nmage/asserts"
+	"github.com/bloeys/nmage/assert"
 	"github.com/bloeys/nmage/materials"
 	"github.com/bloeys/nmage/timing"
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -23,7 +23,7 @@ type ImguiInfo struct {
 func (i *ImguiInfo) FrameStart(winWidth, winHeight float32) {
 
 	if err := i.ImCtx.SetCurrent(); err != nil {
-		asserts.T(false, "Setting imgui ctx as current failed. Err: "+err.Error())
+		assert.T(false, "Setting imgui ctx as current failed. Err: "+err.Error())
 	}
 
 	imIO := imgui.CurrentIO()
@@ -36,7 +36,7 @@ func (i *ImguiInfo) FrameStart(winWidth, winHeight float32) {
 func (i *ImguiInfo) Render(winWidth, winHeight float32, fbWidth, fbHeight int32) {
 
 	if err := i.ImCtx.SetCurrent(); err != nil {
-		asserts.T(false, "Setting imgui ctx as current failed. Err: "+err.Error())
+		assert.T(false, "Setting imgui ctx as current failed. Err: "+err.Error())
 	}
 
 	imgui.Render()
