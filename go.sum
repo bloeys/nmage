@@ -10,6 +10,8 @@ github.com/go-gl/gl v0.0.0-20211025173605-bda47ffaa784 h1:1Zi56D0LNfvkzM+BdoxKry
 github.com/go-gl/gl v0.0.0-20211025173605-bda47ffaa784/go.mod h1:9YTyiznxEY1fVinfM7RvRcjRHbw2xLBJ3AAGIT0I4Nw=
 github.com/inkyblackness/imgui-go/v4 v4.3.0 h1:iyAzqWXq/dG5+6ckDPhGivtrIo6AywGQMvENKzun04s=
 github.com/inkyblackness/imgui-go/v4 v4.3.0/go.mod h1:g8SAGtOYUP7rYaOB2AsVKCEHmPMDmJKgt4z6d+flhb0=
+github.com/inkyblackness/imgui-go/v4 v4.5.0 h1:iUon7q0Hr0c0/Gc2V6bTP7Anu9WH7H26dI7JkPBmMEA=
+github.com/inkyblackness/imgui-go/v4 v4.5.0/go.mod h1:g8SAGtOYUP7rYaOB2AsVKCEHmPMDmJKgt4z6d+flhb0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
