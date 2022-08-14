@@ -20,7 +20,9 @@ import (
 )
 
 // @Todo:
-// Entities and components
+// Complete entity registry (e.g. HasEntity, GetEntity, Generational Indices etc...)
+// Helper functions to update active entities
+
 // Integrate physx
 // Create VAO struct independent from VBO to support multi-VBO use cases (e.g. instancing)
 // Renderer batching
@@ -50,7 +52,50 @@ type OurGame struct {
 	ImGUIInfo nmageimgui.ImguiInfo
 }
 
+// type TransformComp struct {
+// 	Pos   *gglm.Vec3
+// 	Rot   *gglm.Quat
+// 	Scale *gglm.Vec3
+// }
+
+// func (t TransformComp) Name() string {
+// 	return "Transform Component"
+// }
+
+// func Test() {
+
+// 	lvl := level.NewLevel("test level", 1000)
+// 	e := lvl.Registry.NewEntity()
+
+// 	trComp := entity.GetComp[*TransformComp](e)
+// 	fmt.Println("Got comp 1:", trComp)
+
+// 	e.Comps = append(e.Comps, &TransformComp{
+// 		Pos:   gglm.NewVec3(0, 0, 0),
+// 		Rot:   gglm.NewQuatEulerXYZ(0, 0, 0),
+// 		Scale: gglm.NewVec3(0, 0, 0),
+// 	}, &TransformComp{
+// 		Pos:   gglm.NewVec3(0, 0, 0),
+// 		Rot:   gglm.NewQuatEulerXYZ(0, 0, 0),
+// 		Scale: gglm.NewVec3(1, 1, 1),
+// 	})
+
+// 	trComp = entity.GetComp[*TransformComp](e)
+// 	fmt.Println("Got comp 2:", trComp)
+
+// 	trComps := entity.GetAllCompOfType[*TransformComp](e)
+// 	fmt.Printf("Got comp 3: %+v, %+v\n", trComps[0], trComps[1])
+
+// 	fmt.Printf("Entity: %+v\n", e)
+// 	fmt.Printf("Entity: %+v\n", lvl.Registry.NewEntity())
+// 	fmt.Printf("Entity: %+v\n", lvl.Registry.NewEntity())
+// 	fmt.Printf("Entity: %+v\n", lvl.Registry.NewEntity())
+// }
+
 func main() {
+
+	// Test()
+	// return
 
 	//Init engine
 	err := engine.Init()
