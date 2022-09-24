@@ -8,7 +8,9 @@ import (
 	"github.com/bloeys/nmage/assets"
 	"github.com/bloeys/nmage/camera"
 	"github.com/bloeys/nmage/engine"
+	"github.com/bloeys/nmage/entity"
 	"github.com/bloeys/nmage/input"
+	"github.com/bloeys/nmage/level"
 	"github.com/bloeys/nmage/logging"
 	"github.com/bloeys/nmage/materials"
 	"github.com/bloeys/nmage/meshes"
@@ -52,45 +54,45 @@ type OurGame struct {
 	ImGUIInfo nmageimgui.ImguiInfo
 }
 
-// type TransformComp struct {
-// 	Pos   *gglm.Vec3
-// 	Rot   *gglm.Quat
-// 	Scale *gglm.Vec3
-// }
+type TransformComp struct {
+	Pos   *gglm.Vec3
+	Rot   *gglm.Quat
+	Scale *gglm.Vec3
+}
 
-// func (t TransformComp) Name() string {
-// 	return "Transform Component"
-// }
+func (t TransformComp) Name() string {
+	return "Transform Component"
+}
 
-// func Test() {
+func Test() {
 
-// 	lvl := level.NewLevel("test level", 1000)
-// 	e := lvl.Registry.NewEntity()
+	lvl := level.NewLevel("test level", 1000)
+	e1 := lvl.Registry.NewEntity()
 
-// 	trComp := entity.GetComp[*TransformComp](e)
-// 	fmt.Println("Got comp 1:", trComp)
+	trComp := entity.GetComp[*TransformComp](e1)
+	fmt.Println("Got comp 1:", trComp)
 
-// 	e.Comps = append(e.Comps, &TransformComp{
-// 		Pos:   gglm.NewVec3(0, 0, 0),
-// 		Rot:   gglm.NewQuatEulerXYZ(0, 0, 0),
-// 		Scale: gglm.NewVec3(0, 0, 0),
-// 	}, &TransformComp{
-// 		Pos:   gglm.NewVec3(0, 0, 0),
-// 		Rot:   gglm.NewQuatEulerXYZ(0, 0, 0),
-// 		Scale: gglm.NewVec3(1, 1, 1),
-// 	})
+	e1.Comps = append(e1.Comps, &TransformComp{
+		Pos:   gglm.NewVec3(0, 0, 0),
+		Rot:   gglm.NewQuatEulerXYZ(0, 0, 0),
+		Scale: gglm.NewVec3(0, 0, 0),
+	}, &TransformComp{
+		Pos:   gglm.NewVec3(0, 0, 0),
+		Rot:   gglm.NewQuatEulerXYZ(0, 0, 0),
+		Scale: gglm.NewVec3(1, 1, 1),
+	})
 
-// 	trComp = entity.GetComp[*TransformComp](e)
-// 	fmt.Println("Got comp 2:", trComp)
+	trComp = entity.GetComp[*TransformComp](e1)
+	fmt.Println("Got comp 2:", trComp)
 
-// 	trComps := entity.GetAllCompOfType[*TransformComp](e)
-// 	fmt.Printf("Got comp 3: %+v, %+v\n", trComps[0], trComps[1])
+	trComps := entity.GetAllCompOfType[*TransformComp](e1)
+	fmt.Printf("Got comp 3: %+v, %+v\n", trComps[0], trComps[1])
 
-// 	fmt.Printf("Entity: %+v\n", e)
-// 	fmt.Printf("Entity: %+v\n", lvl.Registry.NewEntity())
-// 	fmt.Printf("Entity: %+v\n", lvl.Registry.NewEntity())
-// 	fmt.Printf("Entity: %+v\n", lvl.Registry.NewEntity())
-// }
+	fmt.Printf("Entity: %+v\n", e1)
+	fmt.Printf("Entity: %+v\n", lvl.Registry.NewEntity())
+	fmt.Printf("Entity: %+v\n", lvl.Registry.NewEntity())
+	fmt.Printf("Entity: %+v\n", lvl.Registry.NewEntity())
+}
 
 func main() {
 
