@@ -36,20 +36,23 @@ import (
 // Material system editor with fields automatically extracted from the shader
 
 const (
-	camSpeed float32 = 15
+	camSpeed         = 15
+	mouseSensitivity = 0.5
 )
 
 var (
 	window *engine.Window
 
-	cam *camera.Camera
+	pitch float32 = 0
+	yaw   float32 = -90
+	cam   *camera.Camera
 
 	simpleMat *materials.Material
 	cubeMesh  *meshes.Mesh
 
 	cubeModelMat = gglm.NewTrMatId()
 
-	lightPos1   = gglm.NewVec3(2, 2, 0)
+	lightPos1   = gglm.NewVec3(-2, 0, 2)
 	lightColor1 = gglm.NewVec3(1, 1, 1)
 )
 
@@ -175,8 +178,8 @@ func (g *OurGame) Init() {
 	// Camera
 	winWidth, winHeight := g.Win.SDLWin.GetSize()
 	cam = camera.NewPerspective(
-		gglm.NewVec3(0, 0, -10),
-		gglm.NewVec3(0, 0, 1),
+		gglm.NewVec3(0, 0, 10),
+		gglm.NewVec3(0, 0, -1),
 		gglm.NewVec3(0, 1, 0),
 		0.1, 20,
 		45*gglm.Deg2Rad,
@@ -192,36 +195,28 @@ func (g *OurGame) Init() {
 
 }
 
+func vecRotByQuat(v *gglm.Vec3, q *gglm.Quat) *gglm.Vec3 {
+
+	// Reference: https://gamedev.stackexchange.com/questions/28395/rotating-vector3-by-a-quaternion
+	qVec := gglm.NewVec3(q.X(), q.Y(), q.Z())
+
+	rotatedVec := qVec.Clone().Scale(2 * gglm.DotVec3(v, qVec))
+
+	t1 := q.W()*q.W() - gglm.DotVec3(qVec, qVec)
+	rotatedVec.Add(v.Clone().Scale(t1))
+
+	rotatedVec.Add(gglm.Cross(qVec, v).Scale(2 * q.W()))
+	return rotatedVec
+}
+
 func (g *OurGame) Update() {
 
 	if input.IsQuitClicked() || input.KeyClicked(sdl.K_ESCAPE) {
 		engine.Quit()
 	}
 
-	//Camera movement
-	if input.KeyDown(sdl.K_w) {
-		cam.Pos.Add(cam.WorldUp.Clone().Scale(camSpeed * timing.DT()))
-		updateViewMat()
-	} else if input.KeyDown(sdl.K_s) {
-		cam.Pos.Sub(cam.WorldUp.Clone().Scale(camSpeed * timing.DT()))
-		updateViewMat()
-	}
-
-	if input.KeyDown(sdl.K_d) {
-		cam.Pos.Add(gglm.Cross(&cam.WorldUp, &cam.Forward).Scale(camSpeed * timing.DT()))
-		updateViewMat()
-	} else if input.KeyDown(sdl.K_a) {
-		cam.Pos.Sub(gglm.Cross(&cam.WorldUp, &cam.Forward).Scale(camSpeed * timing.DT()))
-		updateViewMat()
-	}
-
-	if input.GetMouseWheelYNorm() > 0 {
-		cam.Pos.Add(&cam.Forward)
-		updateViewMat()
-	} else if input.GetMouseWheelYNorm() < 0 {
-		cam.Pos.Sub(&cam.Forward)
-		updateViewMat()
-	}
+	g.updateCameraLookAround()
+	g.updateCameraPos()
 
 	//Rotating cubes
 	if input.KeyDown(sdl.K_SPACE) {
@@ -229,10 +224,68 @@ func (g *OurGame) Update() {
 		simpleMat.SetUnifMat4("modelMat", &cubeModelMat.Mat4)
 	}
 
-	imgui.DragFloat3("Cam Pos", &cam.Pos.Data)
+	if imgui.DragFloat3("Cam Pos", &cam.Pos.Data) {
+		updateViewMat()
+	}
+	if imgui.DragFloat3("Cam Forward", &cam.Forward.Data) {
+		updateViewMat()
+	}
 
 	if input.KeyClicked(sdl.K_F4) {
-		fmt.Printf("Pos: %s; Forward: %s; Forward*WorldUp: %s\n", cam.Pos.String(), cam.Forward.String(), gglm.Cross(&cam.Forward, &cam.WorldUp))
+		fmt.Printf("Pos: %s; Forward: %s; |Forward|: %f\n", cam.Pos.String(), cam.Forward.String(), cam.Forward.Mag())
+	}
+}
+
+func (g *OurGame) updateCameraLookAround() {
+
+	mouseX, mouseY := input.GetMouseMotion()
+	if mouseX == 0 && mouseY == 0 {
+		return
+	}
+
+	// Yaw
+	yaw += float32(mouseX) * mouseSensitivity * timing.DT()
+
+	// Pitch
+	pitch += float32(-mouseY) * mouseSensitivity * timing.DT()
+	if pitch > 89.0 {
+		pitch = 89.0
+	}
+
+	if pitch < -89.0 {
+		pitch = -89.0
+	}
+
+	// Update cam forward
+	cam.UpdateRotation(pitch, yaw)
+
+	updateViewMat()
+}
+
+func (g *OurGame) updateCameraPos() {
+
+	update := false
+
+	// Forward and backward
+	if input.KeyDown(sdl.K_w) {
+		cam.Pos.Add(cam.Forward.Clone().Scale(camSpeed * timing.DT()))
+		update = true
+	} else if input.KeyDown(sdl.K_s) {
+		cam.Pos.Add(cam.Forward.Clone().Scale(-camSpeed * timing.DT()))
+		update = true
+	}
+
+	// Left and right
+	if input.KeyDown(sdl.K_d) {
+		cam.Pos.Add(gglm.Cross(&cam.Forward, &cam.WorldUp).Normalize().Scale(camSpeed * timing.DT()))
+		update = true
+	} else if input.KeyDown(sdl.K_a) {
+		cam.Pos.Add(gglm.Cross(&cam.Forward, &cam.WorldUp).Normalize().Scale(-camSpeed * timing.DT()))
+		update = true
+	}
+
+	if update {
+		updateViewMat()
 	}
 }
 

@@ -38,7 +38,7 @@ type Camera struct {
 // Should be called whenever a camera parameter changes
 func (c *Camera) Update() {
 
-	c.ViewMat = gglm.LookAt(&c.Pos, c.Pos.Clone().Add(&c.Forward), &c.WorldUp).Mat4
+	c.ViewMat = gglm.LookAtRH(&c.Pos, c.Pos.Clone().Add(&c.Forward), &c.WorldUp).Mat4
 
 	if c.Type == Type_Perspective {
 		c.ProjMat = *gglm.Perspective(c.Fov, c.AspectRatio, c.NearClip, c.FarClip)
@@ -47,9 +47,15 @@ func (c *Camera) Update() {
 	}
 }
 
-func (c *Camera) LookAt(forward, worldUp *gglm.Vec3) {
-	c.Forward = *forward
-	c.WorldUp = *worldUp
+// UpdateRotation calculates a new forward vector and then calls camera.Update()
+func (c *Camera) UpdateRotation(pitch, yaw float32) {
+
+	dir := gglm.NewVec3(
+		gglm.Cos32(yaw)*gglm.Cos32(pitch),
+		gglm.Sin32(pitch),
+		gglm.Sin32(yaw)*gglm.Cos32(pitch),
+	)
+	c.Forward = *dir.Normalize()
 	c.Update()
 }
 
