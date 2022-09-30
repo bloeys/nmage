@@ -35,6 +35,10 @@ import (
 // Frustum culling
 // Material system editor with fields automatically extracted from the shader
 
+const (
+	camSpeed float32 = 15
+)
+
 var (
 	window *engine.Window
 
@@ -43,7 +47,7 @@ var (
 	simpleMat *materials.Material
 	cubeMesh  *meshes.Mesh
 
-	modelMat = gglm.NewTrMatId()
+	cubeModelMat = gglm.NewTrMatId()
 
 	lightPos1   = gglm.NewVec3(2, 2, 0)
 	lightColor1 = gglm.NewVec3(1, 1, 1)
@@ -165,14 +169,14 @@ func (g *OurGame) Init() {
 	scaleMat := gglm.NewScaleMat(gglm.NewVec3(0.25, 0.25, 0.25))
 	rotMat := gglm.NewRotMat(gglm.NewQuatEuler(gglm.NewVec3(0, 0, 0).AsRad()))
 
-	modelMat.Mul(translationMat.Mul(rotMat.Mul(scaleMat)))
-	simpleMat.SetUnifMat4("modelMat", &modelMat.Mat4)
+	cubeModelMat.Mul(translationMat.Mul(rotMat.Mul(scaleMat)))
+	simpleMat.SetUnifMat4("modelMat", &cubeModelMat.Mat4)
 
 	// Camera
 	winWidth, winHeight := g.Win.SDLWin.GetSize()
 	cam = camera.NewPerspective(
 		gglm.NewVec3(0, 0, -10),
-		gglm.NewVec3(0, 0, -9),
+		gglm.NewVec3(0, 0, 1),
 		gglm.NewVec3(0, 1, 0),
 		0.1, 20,
 		45*gglm.Deg2Rad,
@@ -195,44 +199,46 @@ func (g *OurGame) Update() {
 	}
 
 	//Camera movement
-	var camSpeed float32 = 15
 	if input.KeyDown(sdl.K_w) {
-		cam.Pos.AddY(camSpeed * timing.DT())
+		cam.Pos.Add(cam.WorldUp.Clone().Scale(camSpeed * timing.DT()))
+		updateViewMat()
+	} else if input.KeyDown(sdl.K_s) {
+		cam.Pos.Sub(cam.WorldUp.Clone().Scale(camSpeed * timing.DT()))
 		updateViewMat()
 	}
-	if input.KeyDown(sdl.K_s) {
-		cam.Pos.AddY(-camSpeed * timing.DT())
-		updateViewMat()
-	}
+
 	if input.KeyDown(sdl.K_d) {
-		cam.Pos.AddX(camSpeed * timing.DT())
+		cam.Pos.Add(gglm.Cross(&cam.WorldUp, &cam.Forward).Scale(camSpeed * timing.DT()))
 		updateViewMat()
-	}
-	if input.KeyDown(sdl.K_a) {
-		cam.Pos.AddX(-camSpeed * timing.DT())
+	} else if input.KeyDown(sdl.K_a) {
+		cam.Pos.Sub(gglm.Cross(&cam.WorldUp, &cam.Forward).Scale(camSpeed * timing.DT()))
 		updateViewMat()
 	}
 
 	if input.GetMouseWheelYNorm() > 0 {
-		cam.Pos.AddZ(1)
+		cam.Pos.Add(&cam.Forward)
 		updateViewMat()
 	} else if input.GetMouseWheelYNorm() < 0 {
-		cam.Pos.AddZ(-1)
+		cam.Pos.Sub(&cam.Forward)
 		updateViewMat()
 	}
 
 	//Rotating cubes
 	if input.KeyDown(sdl.K_SPACE) {
-		modelMat.Rotate(10*timing.DT()*gglm.Deg2Rad, gglm.NewVec3(1, 1, 1).Normalize())
-		simpleMat.SetUnifMat4("modelMat", &modelMat.Mat4)
+		cubeModelMat.Rotate(10*timing.DT()*gglm.Deg2Rad, gglm.NewVec3(1, 1, 1).Normalize())
+		simpleMat.SetUnifMat4("modelMat", &cubeModelMat.Mat4)
 	}
 
 	imgui.DragFloat3("Cam Pos", &cam.Pos.Data)
+
+	if input.KeyClicked(sdl.K_F4) {
+		fmt.Printf("Pos: %s; Forward: %s; Forward*WorldUp: %s\n", cam.Pos.String(), cam.Forward.String(), gglm.Cross(&cam.Forward, &cam.WorldUp))
+	}
 }
 
 func (g *OurGame) Render() {
 
-	tempModelMat := modelMat.Clone()
+	tempModelMat := cubeModelMat.Clone()
 
 	rowSize := 100
 	for y := 0; y < rowSize; y++ {
@@ -254,10 +260,6 @@ func (g *OurGame) DeInit() {
 }
 
 func updateViewMat() {
-	target := cam.Pos.Clone()
-	target.AddZ(1)
-	cam.Target = *target
 	cam.Update()
-
 	simpleMat.SetUnifMat4("viewMat", &cam.ViewMat)
 }

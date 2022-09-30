@@ -15,9 +15,8 @@ const (
 type Camera struct {
 	Type Type
 
-	Pos    gglm.Vec3
-	Target gglm.Vec3
-	// Forward gglm.Vec3
+	Pos     gglm.Vec3
+	Forward gglm.Vec3
 	WorldUp gglm.Vec3
 
 	NearClip float32
@@ -35,10 +34,11 @@ type Camera struct {
 	ProjMat gglm.Mat4
 }
 
-// Update recalculates view and projection matrices
+// Update recalculates view matrix and projection matrix.
+// Should be called whenever a camera parameter changes
 func (c *Camera) Update() {
 
-	c.ViewMat = gglm.LookAt(&c.Pos, &c.Target, &c.WorldUp).Mat4
+	c.ViewMat = gglm.LookAt(&c.Pos, c.Pos.Clone().Add(&c.Forward), &c.WorldUp).Mat4
 
 	if c.Type == Type_Perspective {
 		c.ProjMat = *gglm.Perspective(c.Fov, c.AspectRatio, c.NearClip, c.FarClip)
@@ -47,19 +47,18 @@ func (c *Camera) Update() {
 	}
 }
 
-func (c *Camera) LookAt(targetPos, worldUp *gglm.Vec3) {
-	c.Target = *targetPos
+func (c *Camera) LookAt(forward, worldUp *gglm.Vec3) {
+	c.Forward = *forward
 	c.WorldUp = *worldUp
 	c.Update()
 }
 
-func NewPerspective(pos, targetPos, worldUp *gglm.Vec3, nearClip, farClip, fovRadians, aspectRatio float32) *Camera {
+func NewPerspective(pos, forward, worldUp *gglm.Vec3, nearClip, farClip, fovRadians, aspectRatio float32) *Camera {
 
 	cam := &Camera{
-		Type: Type_Perspective,
-		Pos:  *pos,
-		// Forward: *gglm.NewVec3(0, 0, 1),
-		Target:  *targetPos,
+		Type:    Type_Perspective,
+		Pos:     *pos,
+		Forward: *forward,
 		WorldUp: *worldUp,
 
 		NearClip: nearClip,
@@ -73,13 +72,12 @@ func NewPerspective(pos, targetPos, worldUp *gglm.Vec3, nearClip, farClip, fovRa
 	return cam
 }
 
-func NewOrthographic(pos, targetPos, worldUp *gglm.Vec3, nearClip, farClip, left, right, top, bottom float32) *Camera {
+func NewOrthographic(pos, forward, worldUp *gglm.Vec3, nearClip, farClip, left, right, top, bottom float32) *Camera {
 
 	cam := &Camera{
-		Type: Type_Orthographic,
-		Pos:  *pos,
-		// Forward: *gglm.NewVec3(0, 0, 0),
-		Target:  *targetPos,
+		Type:    Type_Orthographic,
+		Pos:     *pos,
+		Forward: *forward,
 		WorldUp: *worldUp,
 
 		NearClip: nearClip,
