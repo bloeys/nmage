@@ -192,7 +192,6 @@ func (g *OurGame) Init() {
 	//Lights
 	simpleMat.SetUnifVec3("lightPos1", lightPos1)
 	simpleMat.SetUnifVec3("lightColor1", lightColor1)
-
 }
 
 // @TODO: Add this to gglm
