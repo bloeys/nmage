@@ -31,7 +31,11 @@ func NewMesh(name, modelPath string, postProcessFlags asig.PostProcess) (*Mesh, 
 	sceneMesh := scene.Meshes[0]
 	mesh.Buf = buffers.NewBuffer()
 
-	assert.T(len(sceneMesh.TexCoords[0]) > 0, "Mesh has no UV0")
+	// assert.T(len(sceneMesh.TexCoords[0]) > 0, "Mesh has no UV0")
+	if len(sceneMesh.TexCoords[0]) == 0 {
+		sceneMesh.TexCoords[0] = make([]gglm.Vec3, len(sceneMesh.Vertices))
+	}
+
 	layoutToUse := []buffers.Element{{ElementType: buffers.DataTypeVec3}, {ElementType: buffers.DataTypeVec3}, {ElementType: buffers.DataTypeVec2}}
 
 	if len(sceneMesh.ColorSets) > 0 && len(sceneMesh.ColorSets[0]) > 0 {
