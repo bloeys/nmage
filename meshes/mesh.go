@@ -31,7 +31,6 @@ func NewMesh(name, modelPath string, postProcessFlags asig.PostProcess) (*Mesh, 
 	sceneMesh := scene.Meshes[0]
 	mesh.Buf = buffers.NewBuffer()
 
-	// assert.T(len(sceneMesh.TexCoords[0]) > 0, "Mesh has no UV0")
 	if len(sceneMesh.TexCoords[0]) == 0 {
 		sceneMesh.TexCoords[0] = make([]gglm.Vec3, len(sceneMesh.Vertices))
 	}
@@ -127,31 +126,6 @@ func interleave(arrs ...arrToInterleave) []float32 {
 	}
 
 	return out
-}
-
-func flattenVec3(vec3s []gglm.Vec3) []float32 {
-
-	floats := make([]float32, len(vec3s)*3)
-	for i := 0; i < len(vec3s); i++ {
-		floats[i*3+0] = vec3s[i].X()
-		floats[i*3+1] = vec3s[i].Y()
-		floats[i*3+2] = vec3s[i].Z()
-	}
-
-	return floats
-}
-
-func flattenVec4(vec4s []gglm.Vec4) []float32 {
-
-	floats := make([]float32, len(vec4s)*4)
-	for i := 0; i < len(vec4s); i++ {
-		floats[i*4+0] = vec4s[i].X()
-		floats[i*4+1] = vec4s[i].Y()
-		floats[i*4+2] = vec4s[i].Z()
-		floats[i*4+3] = vec4s[i].W()
-	}
-
-	return floats
 }
 
 func flattenFaces(faces []asig.Face) []uint32 {
