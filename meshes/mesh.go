@@ -10,9 +10,16 @@ import (
 	"github.com/bloeys/nmage/buffers"
 )
 
+type SubMesh struct {
+	BaseVertex int32
+	BaseIndex  uint32
+	IndexCount int32
+}
+
 type Mesh struct {
-	Name string
-	Buf  buffers.Buffer
+	Name      string
+	Buf       buffers.Buffer
+	SubMeshes []SubMesh
 }
 
 func NewMesh(name, modelPath string, postProcessFlags asig.PostProcess) (*Mesh, error) {
@@ -27,32 +34,68 @@ func NewMesh(name, modelPath string, postProcessFlags asig.PostProcess) (*Mesh, 
 		return nil, errors.New("No meshes found in file: " + modelPath)
 	}
 
-	mesh := &Mesh{Name: name}
-	sceneMesh := scene.Meshes[0]
-	mesh.Buf = buffers.NewBuffer()
-
-	if len(sceneMesh.TexCoords[0]) == 0 {
-		sceneMesh.TexCoords[0] = make([]gglm.Vec3, len(sceneMesh.Vertices))
+	mesh := &Mesh{
+		Name:      name,
+		Buf:       buffers.NewBuffer(),
+		SubMeshes: make([]SubMesh, 0, 1),
 	}
 
-	layoutToUse := []buffers.Element{{ElementType: buffers.DataTypeVec3}, {ElementType: buffers.DataTypeVec3}, {ElementType: buffers.DataTypeVec2}}
+	// Initial sizes assuming one submesh that has vertex pos+normals+texCoords, and 3 indices per face
+	var vertexBufData []float32 = make([]float32, 0, len(scene.Meshes[0].Vertices)*3*3*2)
+	var indexBufData []uint32 = make([]uint32, 0, len(scene.Meshes[0].Faces)*3)
 
-	if len(sceneMesh.ColorSets) > 0 && len(sceneMesh.ColorSets[0]) > 0 {
-		layoutToUse = append(layoutToUse, buffers.Element{ElementType: buffers.DataTypeVec4})
+	for i := 0; i < len(scene.Meshes); i++ {
+
+		sceneMesh := scene.Meshes[i]
+
+		if len(sceneMesh.TexCoords[0]) == 0 {
+			sceneMesh.TexCoords[0] = make([]gglm.Vec3, len(sceneMesh.Vertices))
+			println("Zeroing tex coords for submesh", i)
+		}
+
+		layoutToUse := []buffers.Element{{ElementType: buffers.DataTypeVec3}, {ElementType: buffers.DataTypeVec3}, {ElementType: buffers.DataTypeVec2}}
+		if len(sceneMesh.ColorSets) > 0 && len(sceneMesh.ColorSets[0]) > 0 {
+			layoutToUse = append(layoutToUse, buffers.Element{ElementType: buffers.DataTypeVec4})
+		}
+
+		if i == 0 {
+			mesh.Buf.SetLayout(layoutToUse...)
+		} else {
+
+			// @NOTE: Require that all submeshes have the same vertex buffer layout
+			firstSubmeshLayout := mesh.Buf.GetLayout()
+			assert.T(len(firstSubmeshLayout) == len(layoutToUse), fmt.Sprintf("Vertex layout of submesh %d does not equal vertex layout of the first submesh. Original layout: %v; This layout: %v", i, firstSubmeshLayout, layoutToUse))
+
+			for i := 0; i < len(firstSubmeshLayout); i++ {
+				if firstSubmeshLayout[i].ElementType != layoutToUse[i].ElementType {
+					panic(fmt.Sprintf("Vertex layout of submesh %d does not equal vertex layout of the first submesh. Original layout: %v; This layout: %v", i, firstSubmeshLayout, layoutToUse))
+				}
+			}
+		}
+
+		arrs := []arrToInterleave{{V3s: sceneMesh.Vertices}, {V3s: sceneMesh.Normals}, {V2s: v3sToV2s(sceneMesh.TexCoords[0])}}
+		if len(sceneMesh.ColorSets) > 0 && len(sceneMesh.ColorSets[0]) > 0 {
+			arrs = append(arrs, arrToInterleave{V4s: sceneMesh.ColorSets[0]})
+		}
+
+		indices := flattenFaces(sceneMesh.Faces)
+		mesh.SubMeshes = append(mesh.SubMeshes, SubMesh{
+
+			// Index of the vertex to start from (e.g. if index buffer says use vertex 5, and BaseVertex=3, the vertex used will be vertex 8)
+			BaseVertex: int32(len(vertexBufData)*4) / mesh.Buf.Stride,
+			// Which index (in the index buffer) to start from
+			BaseIndex: uint32(len(indexBufData)),
+			// How many indices in this submesh
+			IndexCount: int32(len(indices)),
+		})
+
+		vertexBufData = append(vertexBufData, interleave(arrs...)...)
+		indexBufData = append(indexBufData, indices...)
 	}
-	mesh.Buf.SetLayout(layoutToUse...)
 
-	var values []float32
-	arrs := []arrToInterleave{{V3s: sceneMesh.Vertices}, {V3s: sceneMesh.Normals}, {V2s: v3sToV2s(sceneMesh.TexCoords[0])}}
-
-	if len(sceneMesh.ColorSets) > 0 && len(sceneMesh.ColorSets[0]) > 0 {
-		arrs = append(arrs, arrToInterleave{V4s: sceneMesh.ColorSets[0]})
-	}
-
-	values = interleave(arrs...)
-
-	mesh.Buf.SetData(values)
-	mesh.Buf.SetIndexBufData(flattenFaces(sceneMesh.Faces))
+	// fmt.Printf("!!! Vertex count: %d; Submeshes: %+v\n", len(vertexBufData)*4/int(mesh.Buf.Stride), mesh.SubMeshes)
+	mesh.Buf.SetData(vertexBufData)
+	mesh.Buf.SetIndexBufData(indexBufData)
 	return mesh, nil
 }
 

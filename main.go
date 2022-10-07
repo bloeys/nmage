@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 
-	"github.com/bloeys/assimp-go/asig"
 	"github.com/bloeys/gglm/gglm"
 	"github.com/bloeys/nmage/assets"
 	"github.com/bloeys/nmage/camera"
@@ -153,7 +152,8 @@ func (g *OurGame) Init() {
 
 	//Load meshes
 	var err error
-	cubeMesh, err = meshes.NewMesh("Cube", "./res/models/tex-cube.fbx", asig.PostProcess(0))
+	// cubeMesh, err = meshes.NewMesh("Cube", "./res/models/Wolf.fbx", 0)
+	cubeMesh, err = meshes.NewMesh("Cube", "./res/models/tex-cube.fbx", 0)
 	if err != nil {
 		logging.ErrLog.Fatalln("Failed to load cube mesh. Err: ", err)
 	}
@@ -181,7 +181,7 @@ func (g *OurGame) Init() {
 		gglm.NewVec3(0, 0, 10),
 		gglm.NewVec3(0, 0, -1),
 		gglm.NewVec3(0, 1, 0),
-		0.1, 20,
+		0.1, 200,
 		45*gglm.Deg2Rad,
 		float32(winWidth)/float32(winHeight),
 	)
@@ -292,8 +292,9 @@ func (g *OurGame) updateCameraPos() {
 func (g *OurGame) Render() {
 
 	tempModelMat := cubeModelMat.Clone()
+	// window.Rend.Draw(cubeMesh, tempModelMat, simpleMat)
 
-	rowSize := 100
+	rowSize := 10
 	for y := 0; y < rowSize; y++ {
 		for x := 0; x < rowSize; x++ {
 			tempModelMat.Translate(gglm.NewVec3(-1, 0, 0))

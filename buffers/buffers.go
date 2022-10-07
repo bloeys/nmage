@@ -10,9 +10,9 @@ type Buffer struct {
 	//BufID is the ID of the VBO
 	BufID uint32
 	//IndexBufID is the ID of the index/element buffer
-	IndexBufID    uint32
-	IndexBufCount int32
-	Stride        int32
+	IndexBufID uint32
+	// IndexBufCount int32
+	Stride int32
 
 	layout []Element
 }
@@ -59,7 +59,7 @@ func (b *Buffer) SetDataWithUsage(values []float32, usage BufUsage) {
 
 func (b *Buffer) SetIndexBufData(values []uint32) {
 
-	b.IndexBufCount = int32(len(values))
+	// b.IndexBufCount = int32(len(values))
 	gl.BindVertexArray(b.VAOID)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, b.IndexBufID)
 
@@ -101,7 +101,7 @@ func (b *Buffer) SetLayout(layout ...Element) {
 
 	for i := 0; i < len(layout); i++ {
 		gl.EnableVertexAttribArray(uint32(i))
-		gl.VertexAttribPointer(uint32(i), layout[i].ElementType.CompCount(), layout[i].ElementType.GLType(), false, b.Stride, gl.PtrOffset(layout[i].Offset))
+		gl.VertexAttribPointerWithOffset(uint32(i), layout[i].ElementType.CompCount(), layout[i].ElementType.GLType(), false, b.Stride, uintptr(layout[i].Offset))
 	}
 
 	b.UnBind()

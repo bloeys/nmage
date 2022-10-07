@@ -28,7 +28,10 @@ func (r3d *Rend3DGL) Draw(mesh *meshes.Mesh, trMat *gglm.TrMat, mat *materials.M
 	}
 
 	mat.SetUnifMat4("modelMat", &trMat.Mat4)
-	gl.DrawElements(gl.TRIANGLES, mesh.Buf.IndexBufCount, gl.UNSIGNED_INT, gl.PtrOffset(0))
+
+	for i := 0; i < len(mesh.SubMeshes); i++ {
+		gl.DrawElementsBaseVertexWithOffset(gl.TRIANGLES, mesh.SubMeshes[i].IndexCount, gl.UNSIGNED_INT, uintptr(mesh.SubMeshes[i].BaseIndex), mesh.SubMeshes[i].BaseVertex)
+	}
 }
 
 func (r3d *Rend3DGL) FrameEnd() {
