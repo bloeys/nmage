@@ -56,6 +56,8 @@ var (
 
 	debugDrawDepthBuffer bool
 	debugDepthMat        *materials.Material
+
+	skyboxCmap assets.Cubemap
 )
 
 type OurGame struct {
@@ -168,6 +170,15 @@ func (g *OurGame) Init() {
 	if err != nil {
 		logging.ErrLog.Fatalln("Failed to load texture. Err: ", err)
 	}
+
+	// skyboxCmap, err = assets.LoadCubemapTextures(
+	// 	"./res/textures/sb-right.jpg", "./res/textures/sb-left.jpg",
+	// 	"./res/textures/sb-top.jpg", "./res/textures/sb-bottom.jpg",
+	// 	"./res/textures/sb-front.jpg", "./res/textures/sb-back.jpg",
+	// )
+	// if err != nil {
+	// 	logging.ErrLog.Fatalln("Failed to load cubemap. Err: ", err)
+	// }
 
 	//Configure material
 	simpleMat.DiffuseTex = tex.TexID

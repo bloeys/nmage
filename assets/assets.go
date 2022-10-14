@@ -1,8 +1,8 @@
 package assets
 
 var (
-	Textures     map[uint32]Texture = make(map[uint32]Texture)
-	TexturePaths map[string]uint32  = make(map[string]uint32)
+	Textures     = make(map[uint32]Texture)
+	TexturePaths = make(map[string]uint32)
 )
 
 func AddTextureToCache(t Texture) {
