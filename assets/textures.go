@@ -2,6 +2,7 @@ package assets
 
 import (
 	"bytes"
+	"fmt"
 	"image"
 	"image/color"
 	"image/jpeg"
@@ -259,7 +260,7 @@ func LoadCubemapTextures(rightTex, leftTex, topTex, botTex, frontTex, backTex st
 		imgDecoder = png.Decode
 		pixelDecoder = pixelsFromNrgbaPng
 	} else {
-		panic("unknown image extension: " + ext)
+		return Cubemap{}, fmt.Errorf("unknown image extension: %s. Expected one of: .jpg, .jpeg, .png", ext)
 	}
 
 	cmap := Cubemap{
@@ -271,8 +272,12 @@ func LoadCubemapTextures(rightTex, leftTex, topTex, botTex, frontTex, backTex st
 		BackPath:  backTex,
 	}
 
+	gl.GenTextures(1, &cmap.TexID)
+	gl.BindTexture(gl.TEXTURE_CUBE_MAP, cmap.TexID)
+
+	// The order here matters
 	texturePaths := []string{rightTex, leftTex, topTex, botTex, frontTex, backTex}
-	for i := 0; i < len(texturePaths); i++ {
+	for i := uint32(0); i < uint32(len(texturePaths)); i++ {
 
 		fPath := texturePaths[i]
 
@@ -289,12 +294,7 @@ func LoadCubemapTextures(rightTex, leftTex, topTex, botTex, frontTex, backTex st
 
 		pixels, width, height := pixelDecoder(img)
 
-		//Prepare opengl stuff
-		gl.GenTextures(1, &cmap.TexID)
-		gl.BindTexture(gl.TEXTURE_CUBE_MAP, cmap.TexID)
-
-		// load and generate the texture
-		gl.TexImage2D(gl.TEXTURE_CUBE_MAP, 0, gl.RGBA8, int32(width), int32(height), 0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&pixels[0]))
+		gl.TexImage2D(uint32(gl.TEXTURE_CUBE_MAP_POSITIVE_X)+i, 0, gl.RGBA8, int32(width), int32(height), 0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&pixels[0]))
 	}
 
 	// set the texture wrapping/filtering options (on the currently bound texture object)

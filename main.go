@@ -16,6 +16,7 @@ import (
 	"github.com/bloeys/nmage/renderer/rend3dgl"
 	"github.com/bloeys/nmage/timing"
 	nmageimgui "github.com/bloeys/nmage/ui/imgui"
+	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -47,15 +48,19 @@ var (
 	cam   *camera.Camera
 
 	simpleMat *materials.Material
-	cubeMesh  *meshes.Mesh
+	skyboxMat *materials.Material
+
+	chairMesh  *meshes.Mesh
+	cubeMesh   *meshes.Mesh
+	skyboxMesh *meshes.Mesh
 
 	cubeModelMat = gglm.NewTrMatId()
 
 	lightPos1   = gglm.NewVec3(-2, 0, 2)
 	lightColor1 = gglm.NewVec3(1, 1, 1)
 
-	debugDrawDepthBuffer bool
 	debugDepthMat        *materials.Material
+	debugDrawDepthBuffer bool
 
 	skyboxCmap assets.Cubemap
 )
@@ -153,16 +158,27 @@ func (g *OurGame) handleWindowEvents(e sdl.Event) {
 
 func (g *OurGame) Init() {
 
+	var err error
+
 	//Create materials
 	simpleMat = materials.NewMaterial("Simple mat", "./res/shaders/simple.glsl")
-	debugDepthMat = materials.NewMaterial("Debug depth math", "./res/shaders/debug-depth.glsl")
+	debugDepthMat = materials.NewMaterial("Debug depth mat", "./res/shaders/debug-depth.glsl")
+	skyboxMat = materials.NewMaterial("Skybox mat", "./res/shaders/skybox.glsl")
 
 	//Load meshes
-	var err error
-	cubeMesh, err = meshes.NewMesh("Cube", "./res/models/chair.fbx", 0)
-	// cubeMesh, err = meshes.NewMesh("Cube", "./res/models/tex-cube.fbx", 0)
+	cubeMesh, err = meshes.NewMesh("Cube", "./res/models/tex-cube.fbx", 0)
 	if err != nil {
-		logging.ErrLog.Fatalln("Failed to load cube mesh. Err: ", err)
+		logging.ErrLog.Fatalln("Failed to load mesh. Err: ", err)
+	}
+
+	chairMesh, err = meshes.NewMesh("Chair", "./res/models/chair.fbx", 0)
+	if err != nil {
+		logging.ErrLog.Fatalln("Failed to load mesh. Err: ", err)
+	}
+
+	skyboxMesh, err = meshes.NewMesh("Skybox", "./res/models/skybox-cube.obj", 0)
+	if err != nil {
+		logging.ErrLog.Fatalln("Failed to load mesh. Err: ", err)
 	}
 
 	//Load textures
@@ -171,16 +187,16 @@ func (g *OurGame) Init() {
 		logging.ErrLog.Fatalln("Failed to load texture. Err: ", err)
 	}
 
-	// skyboxCmap, err = assets.LoadCubemapTextures(
-	// 	"./res/textures/sb-right.jpg", "./res/textures/sb-left.jpg",
-	// 	"./res/textures/sb-top.jpg", "./res/textures/sb-bottom.jpg",
-	// 	"./res/textures/sb-front.jpg", "./res/textures/sb-back.jpg",
-	// )
-	// if err != nil {
-	// 	logging.ErrLog.Fatalln("Failed to load cubemap. Err: ", err)
-	// }
+	skyboxCmap, err = assets.LoadCubemapTextures(
+		"./res/textures/sb-right.jpg", "./res/textures/sb-left.jpg",
+		"./res/textures/sb-top.jpg", "./res/textures/sb-bottom.jpg",
+		"./res/textures/sb-front.jpg", "./res/textures/sb-back.jpg",
+	)
+	if err != nil {
+		logging.ErrLog.Fatalln("Failed to load cubemap. Err: ", err)
+	}
 
-	//Configure material
+	// Configure materials
 	simpleMat.DiffuseTex = tex.TexID
 
 	//Movement, scale and rotation
@@ -249,6 +265,8 @@ func (g *OurGame) Update() {
 	if input.KeyClicked(sdl.K_F4) {
 		fmt.Printf("Pos: %s; Forward: %s; |Forward|: %f\n", cam.Pos.String(), cam.Forward.String(), cam.Forward.Mag())
 	}
+
+	g.Win.SDLWin.SetTitle(fmt.Sprint("nMage (", timing.GetAvgFPS(), " fps)"))
 }
 
 func (g *OurGame) updateCameraLookAround() {
@@ -322,13 +340,51 @@ func (g *OurGame) Render() {
 	rowSize := 1
 	for y := 0; y < rowSize; y++ {
 		for x := 0; x < rowSize; x++ {
-			tempModelMatrix.Translate(gglm.NewVec3(-1, 0, 0))
+			tempModelMatrix.Translate(gglm.NewVec3(-6, 0, 0))
 			window.Rend.Draw(cubeMesh, tempModelMatrix, matToUse)
 		}
 		tempModelMatrix.Translate(gglm.NewVec3(float32(rowSize), -1, 0))
 	}
 
-	g.Win.SDLWin.SetTitle(fmt.Sprint("nMage (", timing.GetAvgFPS(), " fps)"))
+	g.DrawSkybox()
+}
+
+func (g *OurGame) DrawSkybox() {
+
+	// glDepthMask(GL_FALSE);
+	// skyboxShader.use();
+	// // ... set view and projection matrix
+	// glBindVertexArray(skyboxVAO);
+	// glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+	// glDrawArrays(GL_TRIANGLES, 0, 36);
+	// glDepthMask(GL_TRUE);
+	// // ... draw rest of the scene
+
+	gl.Disable(gl.CULL_FACE)
+	gl.DepthFunc(gl.LEQUAL)
+	skyboxMesh.Buf.Bind()
+	skyboxMat.Bind()
+	gl.ActiveTexture(gl.TEXTURE0)
+	gl.BindTexture(gl.TEXTURE_CUBE_MAP, skyboxCmap.TexID)
+
+	viewMat := cam.ViewMat.Clone()
+	viewMat.Set(0, 3, 0)
+	viewMat.Set(1, 3, 0)
+	viewMat.Set(2, 3, 0)
+	viewMat.Set(3, 0, 0)
+	viewMat.Set(3, 1, 0)
+	viewMat.Set(3, 2, 0)
+	viewMat.Set(3, 3, 0)
+
+	skyboxMat.SetUnifMat4("viewMat", viewMat)
+	skyboxMat.SetUnifMat4("projMat", &cam.ProjMat)
+	// window.Rend.Draw(cubeMesh, gglm.NewTrMatId(), skyboxMat)
+	for i := 0; i < len(skyboxMesh.SubMeshes); i++ {
+		gl.DrawElementsBaseVertexWithOffset(gl.TRIANGLES, skyboxMesh.SubMeshes[i].IndexCount, gl.UNSIGNED_INT, uintptr(skyboxMesh.SubMeshes[i].BaseIndex), skyboxMesh.SubMeshes[i].BaseVertex)
+	}
+
+	gl.DepthFunc(gl.LESS)
+	gl.Enable(gl.CULL_FACE)
 }
 
 func (g *OurGame) FrameEnd() {
