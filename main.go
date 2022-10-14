@@ -53,6 +53,9 @@ var (
 
 	lightPos1   = gglm.NewVec3(-2, 0, 2)
 	lightColor1 = gglm.NewVec3(1, 1, 1)
+
+	debugDrawDepthBuffer bool
+	debugDepthMat        *materials.Material
 )
 
 type OurGame struct {
@@ -141,6 +144,7 @@ func (g *OurGame) handleWindowEvents(e sdl.Event) {
 			cam.Update()
 
 			simpleMat.SetUnifMat4("projMat", &cam.ProjMat)
+			debugDepthMat.SetUnifMat4("projMat", &cam.ProjMat)
 		}
 	}
 }
@@ -148,18 +152,19 @@ func (g *OurGame) handleWindowEvents(e sdl.Event) {
 func (g *OurGame) Init() {
 
 	//Create materials
-	simpleMat = materials.NewMaterial("Simple Mat", "./res/shaders/simple.glsl")
+	simpleMat = materials.NewMaterial("Simple mat", "./res/shaders/simple.glsl")
+	debugDepthMat = materials.NewMaterial("Debug depth math", "./res/shaders/debug-depth.glsl")
 
 	//Load meshes
 	var err error
-	// cubeMesh, err = meshes.NewMesh("Cube", "./res/models/Wolf.fbx", 0)
-	cubeMesh, err = meshes.NewMesh("Cube", "./res/models/tex-cube.fbx", 0)
+	cubeMesh, err = meshes.NewMesh("Cube", "./res/models/chair.fbx", 0)
+	// cubeMesh, err = meshes.NewMesh("Cube", "./res/models/tex-cube.fbx", 0)
 	if err != nil {
 		logging.ErrLog.Fatalln("Failed to load cube mesh. Err: ", err)
 	}
 
 	//Load textures
-	tex, err := assets.LoadTexturePNG("./res/textures/Low poly planet.png", nil)
+	tex, err := assets.LoadTexturePNG("./res/textures/pallete-endesga-64-1x.png", nil)
 	if err != nil {
 		logging.ErrLog.Fatalln("Failed to load texture. Err: ", err)
 	}
@@ -169,11 +174,10 @@ func (g *OurGame) Init() {
 
 	//Movement, scale and rotation
 	translationMat := gglm.NewTranslationMat(gglm.NewVec3(0, 0, 0))
-	scaleMat := gglm.NewScaleMat(gglm.NewVec3(0.25, 0.25, 0.25))
-	rotMat := gglm.NewRotMat(gglm.NewQuatEuler(gglm.NewVec3(0, 0, 0).AsRad()))
+	scaleMat := gglm.NewScaleMat(gglm.NewVec3(1, 1, 1))
+	rotMat := gglm.NewRotMat(gglm.NewQuatEuler(gglm.NewVec3(-90, -90, 0).AsRad()))
 
 	cubeModelMat.Mul(translationMat.Mul(rotMat.Mul(scaleMat)))
-	simpleMat.SetUnifMat4("modelMat", &cubeModelMat.Mat4)
 
 	// Camera
 	winWidth, winHeight := g.Win.SDLWin.GetSize()
@@ -186,6 +190,7 @@ func (g *OurGame) Init() {
 		float32(winWidth)/float32(winHeight),
 	)
 	simpleMat.SetUnifMat4("projMat", &cam.ProjMat)
+	debugDepthMat.SetUnifMat4("projMat", &cam.ProjMat)
 
 	updateViewMat()
 
@@ -221,7 +226,6 @@ func (g *OurGame) Update() {
 	//Rotating cubes
 	if input.KeyDown(sdl.K_SPACE) {
 		cubeModelMat.Rotate(10*timing.DT()*gglm.Deg2Rad, gglm.NewVec3(1, 1, 1).Normalize())
-		simpleMat.SetUnifMat4("modelMat", &cubeModelMat.Mat4)
 	}
 
 	if imgui.DragFloat3("Cam Pos", &cam.Pos.Data) {
@@ -266,21 +270,26 @@ func (g *OurGame) updateCameraPos() {
 
 	update := false
 
+	var camSpeedScale float32 = 1.0
+	if input.KeyDown(sdl.K_LSHIFT) {
+		camSpeedScale = 2
+	}
+
 	// Forward and backward
 	if input.KeyDown(sdl.K_w) {
-		cam.Pos.Add(cam.Forward.Clone().Scale(camSpeed * timing.DT()))
+		cam.Pos.Add(cam.Forward.Clone().Scale(camSpeed * camSpeedScale * timing.DT()))
 		update = true
 	} else if input.KeyDown(sdl.K_s) {
-		cam.Pos.Add(cam.Forward.Clone().Scale(-camSpeed * timing.DT()))
+		cam.Pos.Add(cam.Forward.Clone().Scale(-camSpeed * camSpeedScale * timing.DT()))
 		update = true
 	}
 
 	// Left and right
 	if input.KeyDown(sdl.K_d) {
-		cam.Pos.Add(gglm.Cross(&cam.Forward, &cam.WorldUp).Normalize().Scale(camSpeed * timing.DT()))
+		cam.Pos.Add(gglm.Cross(&cam.Forward, &cam.WorldUp).Normalize().Scale(camSpeed * camSpeedScale * timing.DT()))
 		update = true
 	} else if input.KeyDown(sdl.K_a) {
-		cam.Pos.Add(gglm.Cross(&cam.Forward, &cam.WorldUp).Normalize().Scale(-camSpeed * timing.DT()))
+		cam.Pos.Add(gglm.Cross(&cam.Forward, &cam.WorldUp).Normalize().Scale(-camSpeed * camSpeedScale * timing.DT()))
 		update = true
 	}
 
@@ -291,16 +300,21 @@ func (g *OurGame) updateCameraPos() {
 
 func (g *OurGame) Render() {
 
-	tempModelMat := cubeModelMat.Clone()
-	// window.Rend.Draw(cubeMesh, tempModelMat, simpleMat)
+	matToUse := simpleMat
+	imgui.Checkbox("Debug depth buffer", &debugDrawDepthBuffer)
+	if debugDrawDepthBuffer {
+		matToUse = debugDepthMat
+	}
 
-	rowSize := 10
+	tempModelMatrix := cubeModelMat.Clone()
+
+	rowSize := 1
 	for y := 0; y < rowSize; y++ {
 		for x := 0; x < rowSize; x++ {
-			tempModelMat.Translate(gglm.NewVec3(-1, 0, 0))
-			window.Rend.Draw(cubeMesh, tempModelMat, simpleMat)
+			tempModelMatrix.Translate(gglm.NewVec3(-1, 0, 0))
+			window.Rend.Draw(cubeMesh, tempModelMatrix, matToUse)
 		}
-		tempModelMat.Translate(gglm.NewVec3(float32(rowSize), -1, 0))
+		tempModelMatrix.Translate(gglm.NewVec3(float32(rowSize), -1, 0))
 	}
 
 	g.Win.SDLWin.SetTitle(fmt.Sprint("nMage (", timing.GetAvgFPS(), " fps)"))
@@ -316,4 +330,5 @@ func (g *OurGame) DeInit() {
 func updateViewMat() {
 	cam.Update()
 	simpleMat.SetUnifMat4("viewMat", &cam.ViewMat)
+	debugDepthMat.SetUnifMat4("viewMat", &cam.ViewMat)
 }

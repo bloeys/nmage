@@ -43,7 +43,7 @@ func Run(g Game, w *Window, ui nmageimgui.ImguiInfo) {
 
 		g.Update()
 
-		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT)
 		g.Render()
 		ui.Render(float32(width), float32(height), fbWidth, fbHeight)
 		w.SDLWin.GLSwap()
