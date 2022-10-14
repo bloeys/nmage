@@ -272,7 +272,7 @@ func (g *OurGame) Update() {
 func (g *OurGame) updateCameraLookAround() {
 
 	mouseX, mouseY := input.GetMouseMotion()
-	if mouseX == 0 && mouseY == 0 {
+	if (mouseX == 0 && mouseY == 0) || !input.MouseDown(sdl.BUTTON_RIGHT) {
 		return
 	}
 
@@ -336,6 +336,7 @@ func (g *OurGame) Render() {
 	}
 
 	tempModelMatrix := cubeModelMat.Clone()
+	window.Rend.Draw(chairMesh, tempModelMatrix, matToUse)
 
 	rowSize := 1
 	for y := 0; y < rowSize; y++ {
