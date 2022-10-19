@@ -352,15 +352,6 @@ func (g *OurGame) Render() {
 
 func (g *OurGame) DrawSkybox() {
 
-	// glDepthMask(GL_FALSE);
-	// skyboxShader.use();
-	// // ... set view and projection matrix
-	// glBindVertexArray(skyboxVAO);
-	// glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-	// glDrawArrays(GL_TRIANGLES, 0, 36);
-	// glDepthMask(GL_TRUE);
-	// // ... draw rest of the scene
-
 	gl.Disable(gl.CULL_FACE)
 	gl.DepthFunc(gl.LEQUAL)
 	skyboxMesh.Buf.Bind()
