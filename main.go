@@ -262,6 +262,14 @@ func (g *OurGame) Update() {
 		updateViewMat()
 	}
 
+	if imgui.DragFloat3("Light Pos 1", &lightPos1.Data) {
+		simpleMat.SetUnifVec3("lightPos1", lightPos1)
+	}
+
+	if imgui.DragFloat3("Light Color 1", &lightColor1.Data) {
+		simpleMat.SetUnifVec3("lightColor1", lightColor1)
+	}
+
 	if input.KeyClicked(sdl.K_F4) {
 		fmt.Printf("Pos: %s; Forward: %s; |Forward|: %f\n", cam.Pos.String(), cam.Forward.String(), cam.Forward.Mag())
 	}

@@ -29,7 +29,7 @@ void main()
 //shader:fragment
 #version 410
 
-uniform float ambientStrength = 0.1;
+uniform float ambientStrength = 0;
 uniform vec3 ambientLightColor = vec3(1, 1, 1);
 
 uniform vec3 lightPos1;
