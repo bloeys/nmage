@@ -13,9 +13,11 @@ import (
 	"github.com/bloeys/nmage/logging"
 	"github.com/bloeys/nmage/materials"
 	"github.com/bloeys/nmage/meshes"
+	"github.com/bloeys/nmage/physics/physx"
 	"github.com/bloeys/nmage/renderer/rend3dgl"
 	"github.com/bloeys/nmage/timing"
 	nmageimgui "github.com/bloeys/nmage/ui/imgui"
+	"github.com/bloeys/physx-go/pgo"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/veandco/go-sdl2/sdl"
@@ -65,6 +67,7 @@ var (
 type OurGame struct {
 	Win       *engine.Window
 	ImGUIInfo nmageimgui.ImguiInfo
+	Px        *physx.PhysX
 }
 
 type TransformComp struct {
@@ -215,6 +218,37 @@ func (g *OurGame) Init() {
 	//Lights
 	simpleMat.SetUnifVec3("lightPos1", lightPos1)
 	simpleMat.SetUnifVec3("lightColor1", lightColor1)
+
+	// Setup physx
+	px, err := physx.NewPhysx(physx.PhysXCreationOptions{
+		TypicalObjectLength: 1,
+		TypicalObjectSpeed:  9.81,
+
+		EnableVisualDebugger:               true,
+		VisualDebuggerHost:                 "127.0.0.1",
+		VisualDebuggerPort:                 5425,
+		VisualDebuggerTimeoutMillis:        10_000,
+		VisualDebuggerTransmitConstraints:  true,
+		VisualDebuggerTransmitContacts:     true,
+		VisualDebuggerTransmitSceneQueries: true,
+
+		SceneGravity: gglm.NewVec3(0, -9.81, 0),
+		// @TODO: This has to be zero because PhysX is deciding to throw 'Exception 0x406d1388' when creating threads.
+		// This exception is used to provide debuggers with thread names :)
+		// I don't know why it thinks we are running a debugger. This doesn't happen in physx-go.
+		// To fix it either we run in a debugger, which will handle the exception for us, or we set this
+		// to zero and run everything on the main thread
+		SceneCPUDispatcherThreads: 0,
+		SceneContactHandler:       g.PhysxContactHandler,
+	})
+	if err != nil {
+		logging.ErrLog.Fatalln("Failed to create PhysX. Err:", err)
+	}
+	g.Px = px
+}
+
+func (g *OurGame) PhysxContactHandler(pgo.ContactPairHeader) {
+
 }
 
 func (g *OurGame) Update() {

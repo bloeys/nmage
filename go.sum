@@ -2,6 +2,12 @@ github.com/bloeys/assimp-go v0.4.4 h1:Yn5e/RpE0Oes0YMBy8O7KkwAO4R/RpgrZPJCt08dVI
 github.com/bloeys/assimp-go v0.4.4/go.mod h1:my3yRxT7CfOztmvi+0svmwbaqw0KFrxaHxncoyaEIP0=
 github.com/bloeys/gglm v0.43.0 h1:ZpOghR3PHfpkigTDh+FqxLsF0gN8CD6s/bWoei6LyxI=
 github.com/bloeys/gglm v0.43.0/go.mod h1:qwJQ0WzV191wAMwlGicbfbChbKoSedMk7gFFX6GnyOk=
+github.com/bloeys/physx-go v0.1.0 h1:/Zon+zt05hPfCo3gFTbFeZ1PJAGc/pFDyLIiO+V9n4M=
+github.com/bloeys/physx-go v0.1.0/go.mod h1:NeG0fl0thLNfZNXkPPZF1dpZpB57BT8MUOdtdCxQSBw=
+github.com/bloeys/physx-go v0.1.1 h1:gFUfn3PAuqENStxtFfc2W6bVJXEhiQNYOBm+KlffHv8=
+github.com/bloeys/physx-go v0.1.1/go.mod h1:NeG0fl0thLNfZNXkPPZF1dpZpB57BT8MUOdtdCxQSBw=
+github.com/bloeys/physx-go v0.1.2 h1:an/8R/QHMiysd2IcviAIVmgwzXRl7fSqiTSNPzi0qzk=
+github.com/bloeys/physx-go v0.1.2/go.mod h1:NeG0fl0thLNfZNXkPPZF1dpZpB57BT8MUOdtdCxQSBw=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/go-gl/gl v0.0.0-20211210172815-726fda9656d6 h1:zDw5v7qm4yH7N8C8uWd+8Ii9rROdgWxQuGoJ9WDXxfk=
