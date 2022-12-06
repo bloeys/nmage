@@ -226,21 +226,6 @@ func (g *OurGame) Init() {
 	simpleMat.SetUnifVec3("lightColor1", lightColor1)
 }
 
-// @TODO: Add this to gglm
-// func vecRotByQuat(v *gglm.Vec3, q *gglm.Quat) *gglm.Vec3 {
-
-// 	// Reference: https://gamedev.stackexchange.com/questions/28395/rotating-vector3-by-a-quaternion
-// 	qVec := gglm.NewVec3(q.X(), q.Y(), q.Z())
-
-// 	rotatedVec := qVec.Clone().Scale(2 * gglm.DotVec3(v, qVec))
-
-// 	t1 := q.W()*q.W() - gglm.DotVec3(qVec, qVec)
-// 	rotatedVec.Add(v.Clone().Scale(t1))
-
-// 	rotatedVec.Add(gglm.Cross(qVec, v).Scale(2 * q.W()))
-// 	return rotatedVec
-// }
-
 func (g *OurGame) Update() {
 
 	if input.IsQuitClicked() || input.KeyClicked(sdl.K_ESCAPE) {
