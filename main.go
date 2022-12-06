@@ -235,7 +235,7 @@ func (g *OurGame) Init() {
 		SceneGravity: gglm.NewVec3(0, -9.81, 0),
 		// @TODO: This has to be zero because PhysX is deciding to throw 'Exception 0x406d1388' when creating threads.
 		// This exception is used to provide debuggers with thread names :)
-		// I don't know why it thinks we are running a debugger. This doesn't happen in physx-go.
+		// I don't know why it thinks we are running a debugger, but this doesn't happen in physx-go.
 		// To fix it either we run in a debugger, which will handle the exception for us, or we set this
 		// to zero and run everything on the main thread
 		SceneCPUDispatcherThreads: 0,
