@@ -61,7 +61,7 @@ func (r *Registry) NewEntity() *Entity {
 	return entityToUse
 }
 
-func (r *Registry) GetEntity(id uint64) *Entity {
+func (r *Registry) GetEntity(id EntityHandle) *Entity {
 
 	index := GetIndex(id)
 	gen := GetGeneration(id)
@@ -76,11 +76,15 @@ func (r *Registry) GetEntity(id uint64) *Entity {
 	return e
 }
 
-func (r *Registry) FreeEntity(id uint64) {
+func (r *Registry) FreeEntity(id EntityHandle) {
 
 	e := r.GetEntity(id)
 	if e == nil {
 		return
+	}
+
+	for i := 0; i < len(e.Comps); i++ {
+		e.Comps[i].Destroy()
 	}
 
 	r.EntityCount--

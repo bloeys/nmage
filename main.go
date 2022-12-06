@@ -103,9 +103,6 @@ func Test() {
 	trComp = entity.GetComp[*TransformComp](e1)
 	fmt.Println("Got comp 2:", trComp)
 
-	trComps := entity.GetAllCompOfType[*TransformComp](e1)
-	fmt.Printf("Got comp 3: %+v, %+v\n", trComps[0], trComps[1])
-
 	fmt.Printf("Entity: %+v\n", e1)
 	fmt.Printf("Entity: %+v\n", lvl.Registry.NewEntity())
 	fmt.Printf("Entity: %+v\n", lvl.Registry.NewEntity())

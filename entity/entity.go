@@ -13,29 +13,31 @@ const (
 	IndexBitMask        = 0x00_00_FFFF_FFFF_FFFF
 )
 
+type EntityHandle uint64
+
 type Entity struct {
 
 	// Byte 1: Generation; Byte 2: Flags; Bytes 3-8: Index
-	ID    uint64
+	ID    EntityHandle
 	Comps []Comp
 }
 
-func GetGeneration(id uint64) byte {
+func GetGeneration(id EntityHandle) byte {
 	return byte(id >> GenerationShiftBits)
 }
 
-func GetFlags(id uint64) EntityFlag {
+func GetFlags(id EntityHandle) EntityFlag {
 	return EntityFlag(id >> FlagsShiftBits)
 }
 
-func GetIndex(id uint64) uint64 {
-	return id & IndexBitMask
+func GetIndex(id EntityHandle) uint64 {
+	return uint64(id & IndexBitMask)
 }
 
 func (e *Entity) HasFlag(ef EntityFlag) bool {
 	return GetFlags(e.ID)&ef > 0
 }
 
-func NewEntityId(generation byte, flags EntityFlag, index uint64) uint64 {
-	return index | (uint64(generation) << GenerationShiftBits) | (uint64(flags) << FlagsShiftBits)
+func NewEntityId(generation byte, flags EntityFlag, index uint64) EntityHandle {
+	return EntityHandle(index | (uint64(generation) << GenerationShiftBits) | (uint64(flags) << FlagsShiftBits))
 }
