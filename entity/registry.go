@@ -4,6 +4,12 @@ import (
 	"github.com/bloeys/nmage/assert"
 )
 
+var (
+	// The number of slots required to be in the free list before the free list
+	// is used for creating new entries
+	FreeListUsageThreshold uint32 = 20
+)
+
 type freeListitem struct {
 	EntityIndex uint64
 	nextFree    *freeListitem
@@ -12,7 +18,9 @@ type freeListitem struct {
 type Registry struct {
 	EntityCount uint64
 	Entities    []Entity
-	FreeList    *freeListitem
+
+	FreeList     *freeListitem
+	FreeListSize uint32
 }
 
 func (r *Registry) NewEntity() *Entity {
@@ -22,17 +30,18 @@ func (r *Registry) NewEntity() *Entity {
 	entityToUseIndex := uint64(0)
 	var entityToUse *Entity = nil
 
-	if r.FreeList != nil {
+	if r.FreeList != nil && r.FreeListSize > FreeListUsageThreshold {
 
 		entityToUseIndex = r.FreeList.EntityIndex
 		entityToUse = &r.Entities[entityToUseIndex]
 		r.FreeList = r.FreeList.nextFree
+		r.FreeListSize--
 	} else {
 
 		for i := 0; i < len(r.Entities); i++ {
 
 			e := &r.Entities[i]
-			if GetFlags(e.ID) != byte(EntityFlag_Unknown) && !e.HasFlag(EntityFlag_Dead) {
+			if e.HasFlag(EntityFlag_Alive) {
 				continue
 			}
 
@@ -47,7 +56,7 @@ func (r *Registry) NewEntity() *Entity {
 	}
 
 	r.EntityCount++
-	entityToUse.ID = NewEntityId(GetGeneration(entityToUse.ID)+1, byte(EntityFlag_Alive), entityToUseIndex)
+	entityToUse.ID = NewEntityId(GetGeneration(entityToUse.ID)+1, EntityFlag_Alive, entityToUseIndex)
 	assert.T(entityToUse.ID != 0, "Entity ID must not be zero")
 	return entityToUse
 }
@@ -78,12 +87,13 @@ func (r *Registry) FreeEntity(id uint64) {
 	eIndex := GetIndex(e.ID)
 
 	e.Comps = []Comp{}
-	e.ID = NewEntityId(GetGeneration(e.ID), byte(EntityFlag_Dead), eIndex)
+	e.ID = NewEntityId(GetGeneration(e.ID), EntityFlag_None, eIndex)
 
 	r.FreeList = &freeListitem{
 		EntityIndex: eIndex,
 		nextFree:    r.FreeList,
 	}
+	r.FreeListSize++
 }
 
 func NewRegistry(size uint32) *Registry {

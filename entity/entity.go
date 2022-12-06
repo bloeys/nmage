@@ -3,9 +3,8 @@ package entity
 type EntityFlag byte
 
 const (
-	EntityFlag_Unknown EntityFlag = 0
-	EntityFlag_Dead    EntityFlag = 1 << (iota - 1)
-	EntityFlag_Alive
+	EntityFlag_None  EntityFlag = 0
+	EntityFlag_Alive EntityFlag = 1 << (iota - 1)
 )
 
 const (
@@ -25,8 +24,8 @@ func GetGeneration(id uint64) byte {
 	return byte(id >> GenerationShiftBits)
 }
 
-func GetFlags(id uint64) byte {
-	return byte(id >> FlagsShiftBits)
+func GetFlags(id uint64) EntityFlag {
+	return EntityFlag(id >> FlagsShiftBits)
 }
 
 func GetIndex(id uint64) uint64 {
@@ -34,10 +33,10 @@ func GetIndex(id uint64) uint64 {
 }
 
 func (e *Entity) HasFlag(ef EntityFlag) bool {
-	return GetFlags(e.ID)&byte(ef) > 0
+	return GetFlags(e.ID)&ef > 0
 }
 
-func NewEntityId(generation, flags byte, index uint64) uint64 {
+func NewEntityId(generation byte, flags EntityFlag, index uint64) uint64 {
 	return index | (uint64(generation) << GenerationShiftBits) | (uint64(flags) << FlagsShiftBits)
 }
 
