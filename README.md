@@ -1,6 +1,6 @@
 # nMage
 
-[![build](https://github.com/bloeys/nmage/actions/workflows/run-nmage.yml/badge.svg)](https://github.com/bloeys/nmage/actions/workflows/run-nmage.yml)
+[![build](https://github.com/bloeys/nmage/actions/workflows/build-nmage.yml/badge.svg)](https://github.com/bloeys/nmage/actions/workflows/build-nmage.yml)
 
 nMage is a (hopefully!) high performance 3D Game Engine written in Go being developed [live](https://twitch.tv/bloeys), with recordings posted on [YouTube](https://www.youtube.com/channel/UCCf4qyNGPVwpj1HYFGahs_A).
 
