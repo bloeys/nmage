@@ -71,12 +71,14 @@ type OurGame struct {
 }
 
 type TransformComp struct {
+	entity.BaseComp
+
 	Pos   *gglm.Vec3
 	Rot   *gglm.Quat
 	Scale *gglm.Vec3
 }
 
-func (t TransformComp) Name() string {
+func (t *TransformComp) Name() string {
 	return "Transform Component"
 }
 
