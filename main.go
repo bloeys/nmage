@@ -88,20 +88,15 @@ func Test() {
 	e1 := lvl.Registry.NewEntity()
 
 	trComp := entity.GetComp[*TransformComp](e1)
-	fmt.Println("Got comp 1:", trComp)
+	fmt.Println("Get comp before adding any:", trComp)
 
-	e1.Comps = append(e1.Comps, &TransformComp{
+	entity.AddComp(e1, &TransformComp{
 		Pos:   gglm.NewVec3(0, 0, 0),
 		Rot:   gglm.NewQuatEulerXYZ(0, 0, 0),
 		Scale: gglm.NewVec3(0, 0, 0),
-	}, &TransformComp{
-		Pos:   gglm.NewVec3(0, 0, 0),
-		Rot:   gglm.NewQuatEulerXYZ(0, 0, 0),
-		Scale: gglm.NewVec3(1, 1, 1),
 	})
-
 	trComp = entity.GetComp[*TransformComp](e1)
-	fmt.Println("Got comp 2:", trComp)
+	fmt.Println("Get transform comp:", trComp)
 
 	fmt.Printf("Entity: %+v\n", e1)
 	fmt.Printf("Entity: %+v\n", lvl.Registry.NewEntity())

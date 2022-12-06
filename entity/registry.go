@@ -76,6 +76,7 @@ func (r *Registry) GetEntity(id EntityHandle) *Entity {
 	return e
 }
 
+// FreeEntity calls Destroy on all the entities components, resets the component list, resets the entity flags, then ads this entity to the free list
 func (r *Registry) FreeEntity(id EntityHandle) {
 
 	e := r.GetEntity(id)

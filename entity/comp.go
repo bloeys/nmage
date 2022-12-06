@@ -15,7 +15,7 @@ type Comp interface {
 
 func AddComp[T Comp](e *Entity, c T) {
 
-	assert.T(!HasComp[T](e), "Entity with id %v already has component with name %s", e.ID, c.Name())
+	assert.T(!HasComp[T](e), "Entity with id '%v' already has component of type '%T'", e.ID, c)
 
 	e.Comps = append(e.Comps, c)
 	c.Init(e)
