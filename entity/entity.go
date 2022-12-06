@@ -22,6 +22,16 @@ type Entity struct {
 	Comps []Comp
 }
 
+func (e *Entity) HasFlag(ef EntityFlag) bool {
+	return GetFlags(e.ID)&ef > 0
+}
+
+func (e *Entity) UpdateAllComps() {
+	for i := 0; i < len(e.Comps); i++ {
+		e.Comps[i].Update()
+	}
+}
+
 func GetGeneration(id EntityHandle) byte {
 	return byte(id >> GenerationShiftBits)
 }
@@ -32,10 +42,6 @@ func GetFlags(id EntityHandle) EntityFlag {
 
 func GetIndex(id EntityHandle) uint64 {
 	return uint64(id & IndexBitMask)
-}
-
-func (e *Entity) HasFlag(ef EntityFlag) bool {
-	return GetFlags(e.ID)&ef > 0
 }
 
 func NewEntityId(generation byte, flags EntityFlag, index uint64) EntityHandle {

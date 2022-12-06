@@ -22,9 +22,6 @@ import (
 )
 
 // @Todo:
-// Complete entity registry (e.g. HasEntity, GetEntity, Generational Indices etc...)
-// Helper functions to update active entities
-
 // Integrate physx
 // Create VAO struct independent from VBO to support multi-VBO use cases (e.g. instancing)
 // Renderer batching
