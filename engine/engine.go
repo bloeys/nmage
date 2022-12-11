@@ -172,6 +172,7 @@ func createWindow(title string, x, y, width, height int32, flags WindowFlags, re
 		return nil, err
 	}
 
+	win.SDLWin.GLSwap()
 	return win, err
 }
 

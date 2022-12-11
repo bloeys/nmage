@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/bloeys/gglm/gglm"
+	"github.com/bloeys/nmage/logging"
 	"github.com/bloeys/physx-go/pgo"
 )
 
@@ -40,6 +41,12 @@ type PhysXCreationOptions struct {
 
 func NewPhysx(options PhysXCreationOptions) (px *PhysX, err error) {
 
+	if options.EnableVisualDebugger && !pgo.PvdSupported {
+		return nil, errors.New("can not enable PhysX visual debugger (PVD) because physx-go is in release mode. Please build without the 'physx_release' tag")
+	}
+
+	logging.InfoLog.Printf("Initializing PhysX. Worker threads: %d. PVD supported: %v\n", options.SceneCPUDispatcherThreads, pgo.PvdSupported)
+
 	// Setup foundation, pvd, and physics
 	px = &PhysX{}
 	px.Foundation = pgo.CreateFoundation()
@@ -66,7 +73,6 @@ func NewPhysx(options PhysXCreationOptions) (px *PhysX, err error) {
 	sd.SetOnContactCallback(options.SceneContactHandler)
 
 	px.Scene = px.Physics.CreateScene(sd)
-
 	if options.EnableVisualDebugger {
 
 		scenePvdClient := px.Scene.GetScenePvdClient()

@@ -224,7 +224,7 @@ func (g *OurGame) Init() {
 		TypicalObjectLength: 1,
 		TypicalObjectSpeed:  9.81,
 
-		EnableVisualDebugger:               true,
+		EnableVisualDebugger:               pgo.PvdSupported,
 		VisualDebuggerHost:                 "127.0.0.1",
 		VisualDebuggerPort:                 5425,
 		VisualDebuggerTimeoutMillis:        10_000,
@@ -233,12 +233,8 @@ func (g *OurGame) Init() {
 		VisualDebuggerTransmitSceneQueries: true,
 
 		SceneGravity: gglm.NewVec3(0, -9.81, 0),
-		// @TODO: This has to be zero because PhysX is deciding to throw 'Exception 0x406d1388' when creating threads.
-		// This exception is used to provide debuggers with thread names :)
-		// I don't know why it thinks we are running a debugger, but this doesn't happen in physx-go.
-		// To fix it either we run in a debugger, which will handle the exception for us, or we set this
-		// to zero and run everything on the main thread
-		SceneCPUDispatcherThreads: 0,
+
+		SceneCPUDispatcherThreads: 2,
 		SceneContactHandler:       g.PhysxContactHandler,
 	})
 	if err != nil {
