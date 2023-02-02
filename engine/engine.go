@@ -112,7 +112,7 @@ func Init() error {
 
 func initSDL() error {
 
-	err := sdl.Init(sdl.INIT_EVERYTHING)
+	err := sdl.Init(sdl.INIT_TIMER | sdl.INIT_VIDEO)
 	if err != nil {
 		return err
 	}
