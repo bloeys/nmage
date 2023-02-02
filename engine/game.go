@@ -24,26 +24,25 @@ func Run(g Game, w *Window, ui nmageimgui.ImguiInfo) {
 
 	isRunning = true
 
-	// Simulate 2 imgui frames, one before and one after g.Init so any imgui calls are allowed within init.
-	// Calling before is required for things like push font.
-	tempWidth, tempHeight := w.SDLWin.GetSize()
-	tempFBWidth, tempFBHeight := w.SDLWin.GLGetDrawableSize()
-	ui.FrameStart(float32(tempWidth), float32(tempHeight))
-	ui.Render(float32(tempWidth), float32(tempHeight), tempFBWidth, tempFBHeight)
+	// Run init with an active Imgui frame to allow init full imgui access
+	timing.FrameStarted()
+	w.handleInputs()
+
+	width, height := w.SDLWin.GetSize()
+	ui.FrameStart(float32(width), float32(height))
 
 	g.Init()
 
-	// Second imgui frame
-	tempWidth, tempHeight = w.SDLWin.GetSize()
-	tempFBWidth, tempFBHeight = w.SDLWin.GLGetDrawableSize()
-	ui.FrameStart(float32(tempWidth), float32(tempHeight))
-	ui.Render(float32(tempWidth), float32(tempHeight), tempFBWidth, tempFBHeight)
+	fbWidth, fbHeight := w.SDLWin.GLGetDrawableSize()
+	ui.Render(float32(width), float32(height), fbWidth, fbHeight)
+
+	timing.FrameEnded()
 
 	for isRunning {
 
 		//PERF: Cache these
-		width, height := w.SDLWin.GetSize()
-		fbWidth, fbHeight := w.SDLWin.GLGetDrawableSize()
+		width, height = w.SDLWin.GetSize()
+		fbWidth, fbHeight = w.SDLWin.GLGetDrawableSize()
 
 		timing.FrameStarted()
 		w.handleInputs()
