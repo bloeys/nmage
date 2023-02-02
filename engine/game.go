@@ -23,11 +23,19 @@ type Game interface {
 func Run(g Game, w *Window, ui nmageimgui.ImguiInfo) {
 
 	isRunning = true
-	g.Init()
 
-	//Simulate an imgui frame during init so any imgui calls are allowed within init
+	// Simulate 2 imgui frames, one before and one after g.Init so any imgui calls are allowed within init.
+	// Calling before is required for things like push font.
 	tempWidth, tempHeight := w.SDLWin.GetSize()
 	tempFBWidth, tempFBHeight := w.SDLWin.GLGetDrawableSize()
+	ui.FrameStart(float32(tempWidth), float32(tempHeight))
+	ui.Render(float32(tempWidth), float32(tempHeight), tempFBWidth, tempFBHeight)
+
+	g.Init()
+
+	// Second imgui frame
+	tempWidth, tempHeight = w.SDLWin.GetSize()
+	tempFBWidth, tempFBHeight = w.SDLWin.GLGetDrawableSize()
 	ui.FrameStart(float32(tempWidth), float32(tempHeight))
 	ui.Render(float32(tempWidth), float32(tempHeight), tempFBWidth, tempFBHeight)
 
