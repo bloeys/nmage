@@ -7,10 +7,13 @@ import (
 
 type Buffer struct {
 	VAOID uint32
-	//BufID is the ID of the VBO
+	// BufID is the ID of the VBO
 	BufID uint32
-	//IndexBufID is the ID of the index/element buffer
+	// IndexBufID is the ID of the index/element buffer
 	IndexBufID uint32
+	// IndexBufCount is the number of elements in the index buffer
+	// Updated on SetIndexBufData
+	IndexBufCount int32
 	// IndexBufCount int32
 	Stride int32
 
@@ -59,7 +62,7 @@ func (b *Buffer) SetDataWithUsage(values []float32, usage BufUsage) {
 
 func (b *Buffer) SetIndexBufData(values []uint32) {
 
-	// b.IndexBufCount = int32(len(values))
+	b.IndexBufCount = int32(len(values))
 	gl.BindVertexArray(b.VAOID)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, b.IndexBufID)
 
@@ -80,8 +83,8 @@ func (b *Buffer) GetLayout() []Element {
 	return e
 }
 
-//SetLayout updates the layout object and the corresponding vertex attributes.
-//Vertex attributes are also enabled.
+// SetLayout updates the layout object and the corresponding vertex attributes.
+// Vertex attributes are also enabled.
 func (b *Buffer) SetLayout(layout ...Element) {
 
 	b.layout = layout
