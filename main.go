@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"runtime"
 
 	"github.com/bloeys/gglm/gglm"
 	"github.com/bloeys/nmage/assets"
@@ -35,6 +36,9 @@ import (
 const (
 	camSpeed         = 15
 	mouseSensitivity = 0.5
+
+	unscaledWindowWidth  = 1280
+	unscaledWindowHeight = 720
 )
 
 var (
@@ -60,6 +64,8 @@ var (
 	debugDrawDepthBuffer bool
 
 	skyboxCmap assets.Cubemap
+
+	dpiScaling float32
 )
 
 type OurGame struct {
@@ -113,7 +119,8 @@ func main() {
 	}
 
 	//Create window
-	window, err = engine.CreateOpenGLWindowCentered("nMage", 1280, 720, engine.WindowFlags_RESIZABLE, rend3dgl.NewRend3DGL())
+	dpiScaling = getDpiScaling(unscaledWindowWidth, unscaledWindowHeight)
+	window, err = engine.CreateOpenGLWindowCentered("nMage", int32(unscaledWindowWidth*dpiScaling), int32(unscaledWindowHeight*dpiScaling), engine.WindowFlags_RESIZABLE, rend3dgl.NewRend3DGL())
 	if err != nil {
 		logging.ErrLog.Fatalln("Failed to create window. Err: ", err)
 	}
@@ -145,6 +152,40 @@ func (g *OurGame) handleWindowEvents(e sdl.Event) {
 			debugDepthMat.SetUnifMat4("projMat", &cam.ProjMat)
 		}
 	}
+}
+
+func getDpiScaling(unscaledWindowWidth, unscaledWindowHeight int32) float32 {
+
+	// Great read on DPI here: https://nlguillemot.wordpress.com/2016/12/11/high-dpi-rendering/
+
+	// The no-scaling DPI on different platforms (e.g. when scale=100% on windows)
+	var defaultDpi float32 = 96
+	if runtime.GOOS == "windows" {
+		defaultDpi = 96
+	} else if runtime.GOOS == "darwin" {
+		defaultDpi = 72
+	}
+
+	// Current DPI of the monitor
+	_, dpiHorizontal, _, err := sdl.GetDisplayDPI(0)
+	if err != nil {
+		dpiHorizontal = defaultDpi
+		fmt.Printf("Failed to get DPI with error '%s'. Using default DPI of '%f'\n", err.Error(), defaultDpi)
+	}
+
+	// Scaling factor (e.g. will be 1.25 for 125% scaling on windows)
+	dpiScaling := dpiHorizontal / defaultDpi
+
+	fmt.Printf(
+		"Default DPI=%f\nHorizontal DPI=%f\nDPI scaling=%f\nUnscaled window size (width, height)=(%d, %d)\nScaled window size (width, height)=(%d, %d)\n\n",
+		defaultDpi,
+		dpiHorizontal,
+		dpiScaling,
+		unscaledWindowWidth, unscaledWindowHeight,
+		int32(float32(unscaledWindowWidth)*dpiScaling), int32(float32(unscaledWindowHeight)*dpiScaling),
+	)
+
+	return dpiScaling
 }
 
 func (g *OurGame) Init() {
