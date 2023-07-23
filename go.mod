@@ -9,5 +9,6 @@ require github.com/go-gl/gl v0.0.0-20211210172815-726fda9656d6
 require (
 	github.com/bloeys/assimp-go v0.4.4
 	github.com/bloeys/gglm v0.43.0
-	github.com/inkyblackness/imgui-go/v4 v4.6.0
 )
+
+require github.com/AllenDang/cimgui-go v0.0.0-20230720025235-f2ff398a66b2

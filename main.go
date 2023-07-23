@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"runtime"
 
+	newimgui "github.com/AllenDang/cimgui-go"
 	"github.com/bloeys/gglm/gglm"
 	"github.com/bloeys/nmage/assets"
 	"github.com/bloeys/nmage/camera"
@@ -18,7 +19,6 @@ import (
 	"github.com/bloeys/nmage/timing"
 	nmageimgui "github.com/bloeys/nmage/ui/imgui"
 	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -130,7 +130,7 @@ func main() {
 
 	game := &OurGame{
 		Win:       window,
-		ImGUIInfo: nmageimgui.NewImGUI(),
+		ImGUIInfo: nmageimgui.NewImGui(),
 	}
 	window.EventCallbacks = append(window.EventCallbacks, game.handleWindowEvents)
 
@@ -272,18 +272,18 @@ func (g *OurGame) Update() {
 		cubeModelMat.Rotate(10*timing.DT()*gglm.Deg2Rad, gglm.NewVec3(1, 1, 1).Normalize())
 	}
 
-	if imgui.DragFloat3("Cam Pos", &cam.Pos.Data) {
+	if newimgui.DragFloat3("Cam Pos", &cam.Pos.Data) {
 		updateViewMat()
 	}
-	if imgui.DragFloat3("Cam Forward", &cam.Forward.Data) {
+	if newimgui.DragFloat3("Cam Forward", &cam.Forward.Data) {
 		updateViewMat()
 	}
 
-	if imgui.DragFloat3("Light Pos 1", &lightPos1.Data) {
+	if newimgui.DragFloat3("Light Pos 1", &lightPos1.Data) {
 		simpleMat.SetUnifVec3("lightPos1", lightPos1)
 	}
 
-	if imgui.DragFloat3("Light Color 1", &lightColor1.Data) {
+	if newimgui.DragFloat3("Light Color 1", &lightColor1.Data) {
 		simpleMat.SetUnifVec3("lightColor1", lightColor1)
 	}
 
@@ -355,7 +355,7 @@ func (g *OurGame) updateCameraPos() {
 func (g *OurGame) Render() {
 
 	matToUse := simpleMat
-	imgui.Checkbox("Debug depth buffer", &debugDrawDepthBuffer)
+	newimgui.Checkbox("Debug depth buffer", &debugDrawDepthBuffer)
 	if debugDrawDepthBuffer {
 		matToUse = debugDepthMat
 	}

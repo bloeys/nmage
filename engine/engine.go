@@ -3,12 +3,12 @@ package engine
 import (
 	"runtime"
 
+	newimgui "github.com/AllenDang/cimgui-go"
 	"github.com/bloeys/nmage/assert"
 	"github.com/bloeys/nmage/input"
 	"github.com/bloeys/nmage/renderer"
 	"github.com/bloeys/nmage/timing"
 	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/inkyblackness/imgui-go/v4"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -26,8 +26,9 @@ type Window struct {
 func (w *Window) handleInputs() {
 
 	input.EventLoopStart()
-	imIO := imgui.CurrentIO()
+	imIO := newimgui.CurrentIO()
 
+	// @TODO: Would be nice to have imgui package process its own events via a callback instead of it being part of engine code
 	for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 
 		//Fire callbacks
@@ -49,13 +50,14 @@ func (w *Window) handleInputs() {
 			input.HandleKeyboardEvent(e)
 
 			if e.Type == sdl.KEYDOWN {
-				imIO.KeyPress(int(e.Keysym.Scancode))
+				// @TODO: Move to new ImGui input system
+				// imIO.KeyPress(int(e.Keysym.Scancode))
 			} else if e.Type == sdl.KEYUP {
-				imIO.KeyRelease(int(e.Keysym.Scancode))
+				// imIO.KeyRelease(int(e.Keysym.Scancode))
 			}
 
 		case *sdl.TextInputEvent:
-			imIO.AddInputCharacters(string(e.Text[:]))
+			// imIO.AddInputCharacters(string(e.Text[:]))
 
 		case *sdl.MouseButtonEvent:
 			input.HandleMouseBtnEvent(e)
@@ -74,16 +76,16 @@ func (w *Window) handleInputs() {
 	}
 
 	// If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release events that are shorter than 1 frame.
-	x, y, _ := sdl.GetMouseState()
-	imIO.SetMousePosition(imgui.Vec2{X: float32(x), Y: float32(y)})
+	// x, y, _ := sdl.GetMouseState()
+	// imIO.SetMousePosition(imgui.Vec2{X: float32(x), Y: float32(y)})
 
 	imIO.SetMouseButtonDown(0, input.MouseDown(sdl.BUTTON_LEFT))
 	imIO.SetMouseButtonDown(1, input.MouseDown(sdl.BUTTON_RIGHT))
 	imIO.SetMouseButtonDown(2, input.MouseDown(sdl.BUTTON_MIDDLE))
 
-	imIO.KeyShift(sdl.SCANCODE_LSHIFT, sdl.SCANCODE_RSHIFT)
-	imIO.KeyCtrl(sdl.SCANCODE_LCTRL, sdl.SCANCODE_RCTRL)
-	imIO.KeyAlt(sdl.SCANCODE_LALT, sdl.SCANCODE_RALT)
+	// imIO.KeyShift(sdl.SCANCODE_LSHIFT, sdl.SCANCODE_RSHIFT)
+	// imIO.KeyCtrl(sdl.SCANCODE_LCTRL, sdl.SCANCODE_RCTRL)
+	// imIO.KeyAlt(sdl.SCANCODE_LALT, sdl.SCANCODE_RALT)
 }
 
 func (w *Window) handleWindowResize() {
