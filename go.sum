@@ -13,5 +13,9 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0Q=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
+github.com/veandco/go-sdl2 v0.4.3 h1:vAmvGBrWRmeQ1BhzwbDCSNjKIBLGjTuN0rFN4jnl840=
+github.com/veandco/go-sdl2 v0.4.3/go.mod h1:FB+kTpX9YTE+urhYiClnRzpOXbiWgaU3+5F2AB78DPg=
 github.com/veandco/go-sdl2 v0.4.25 h1:J5ac3KKOccp/0xGJA1PaNYKPUcZm19IxhDGs8lJofPI=
 github.com/veandco/go-sdl2 v0.4.25/go.mod h1:OROqMhHD43nT4/i9crJukyVecjPNYYuCofep6SNiAjY=
+github.com/veandco/go-sdl2 v0.4.35 h1:NohzsfageDWGtCd9nf7Pc3sokMK/MOK+UA2QMJARWzQ=
+github.com/veandco/go-sdl2 v0.4.35/go.mod h1:OROqMhHD43nT4/i9crJukyVecjPNYYuCofep6SNiAjY=
