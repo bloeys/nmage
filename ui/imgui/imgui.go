@@ -1,7 +1,7 @@
 package nmageimgui
 
 import (
-	newimgui "github.com/AllenDang/cimgui-go"
+	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/bloeys/gglm/gglm"
 	"github.com/bloeys/nmage/materials"
 	"github.com/bloeys/nmage/timing"
@@ -10,8 +10,7 @@ import (
 )
 
 type ImguiInfo struct {
-	ImCtx newimgui.Context
-	// ImCtx2 *imgui.Context
+	ImCtx imgui.Context
 
 	Mat        *materials.Material
 	VaoID      uint32
@@ -26,11 +25,11 @@ func (i *ImguiInfo) FrameStart(winWidth, winHeight float32) {
 	// 	assert.T(false, "Setting imgui ctx as current failed. Err: "+err.Error())
 	// }
 
-	imIO := newimgui.CurrentIO()
-	imIO.SetDisplaySize(newimgui.Vec2{X: float32(winWidth), Y: float32(winHeight)})
+	imIO := imgui.CurrentIO()
+	imIO.SetDisplaySize(imgui.Vec2{X: float32(winWidth), Y: float32(winHeight)})
 	imIO.SetDeltaTime(timing.DT())
 
-	newimgui.NewFrame()
+	imgui.NewFrame()
 }
 
 func (i *ImguiInfo) Render(winWidth, winHeight float32, fbWidth, fbHeight int32) {
@@ -39,15 +38,15 @@ func (i *ImguiInfo) Render(winWidth, winHeight float32, fbWidth, fbHeight int32)
 	// 	assert.T(false, "Setting imgui ctx as current failed. Err: "+err.Error())
 	// }
 
-	newimgui.Render()
+	imgui.Render()
 
 	// Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
 	if fbWidth <= 0 || fbHeight <= 0 {
 		return
 	}
 
-	drawData := newimgui.CurrentDrawData()
-	drawData.ScaleClipRects(newimgui.Vec2{
+	drawData := imgui.CurrentDrawData()
+	drawData.ScaleClipRects(imgui.Vec2{
 		X: float32(fbWidth) / float32(winWidth),
 		Y: float32(fbHeight) / float32(winHeight),
 	})
@@ -79,7 +78,7 @@ func (i *ImguiInfo) Render(winWidth, winHeight float32, fbWidth, fbHeight int32)
 	gl.BindVertexArray(i.VaoID)
 	gl.BindBuffer(gl.ARRAY_BUFFER, i.VboID)
 
-	vertexSize, vertexOffsetPos, vertexOffsetUv, vertexOffsetCol := newimgui.VertexBufferLayout()
+	vertexSize, vertexOffsetPos, vertexOffsetUv, vertexOffsetCol := imgui.VertexBufferLayout()
 	i.Mat.EnableAttribute("Position")
 	i.Mat.EnableAttribute("UV")
 	i.Mat.EnableAttribute("Color")
@@ -87,7 +86,7 @@ func (i *ImguiInfo) Render(winWidth, winHeight float32, fbWidth, fbHeight int32)
 	gl.VertexAttribPointerWithOffset(uint32(i.Mat.GetAttribLoc("UV")), 2, gl.FLOAT, false, int32(vertexSize), uintptr(vertexOffsetUv))
 	gl.VertexAttribPointerWithOffset(uint32(i.Mat.GetAttribLoc("Color")), 4, gl.UNSIGNED_BYTE, true, int32(vertexSize), uintptr(vertexOffsetCol))
 
-	indexSize := newimgui.IndexBufferLayout()
+	indexSize := imgui.IndexBufferLayout()
 	drawType := gl.UNSIGNED_SHORT
 	if indexSize == 4 {
 		drawType = gl.UNSIGNED_INT
@@ -124,19 +123,19 @@ func (i *ImguiInfo) Render(winWidth, winHeight float32, fbWidth, fbHeight int32)
 	gl.Enable(gl.DEPTH_TEST)
 }
 
-func (i *ImguiInfo) AddFontTTF(fontPath string, fontSize float32, fontConfig *newimgui.FontConfig, glyphRanges *newimgui.GlyphRange) newimgui.Font {
+func (i *ImguiInfo) AddFontTTF(fontPath string, fontSize float32, fontConfig *imgui.FontConfig, glyphRanges *imgui.GlyphRange) imgui.Font {
 
-	fontConfigToUse := newimgui.NewFontConfig()
+	fontConfigToUse := imgui.NewFontConfig()
 	if fontConfig != nil {
 		fontConfigToUse = *fontConfig
 	}
 
-	glyphRangesToUse := newimgui.NewGlyphRange()
+	glyphRangesToUse := imgui.NewGlyphRange()
 	if glyphRanges != nil {
 		glyphRangesToUse = *glyphRanges
 	}
 
-	imIO := newimgui.CurrentIO()
+	imIO := imgui.CurrentIO()
 
 	a := imIO.Fonts()
 	f := a.AddFontFromFileTTFV(fontPath, fontSize, fontConfigToUse, glyphRangesToUse.Data())
@@ -187,14 +186,13 @@ void main()
 func NewImGui() ImguiInfo {
 
 	imguiInfo := ImguiInfo{
-		// ImCtx2: imgui.CreateContext(nil),
-		ImCtx: newimgui.CreateContext(),
-
-		Mat: materials.NewMaterialSrc("ImGUI Mat", []byte(imguiShdrSrc)),
+		ImCtx: imgui.CreateContext(),
+		Mat:   materials.NewMaterialSrc("ImGUI Mat", []byte(imguiShdrSrc)),
 	}
 
-	imIO := newimgui.CurrentIO()
-	imIO.SetBackendFlags(imIO.BackendFlags() | newimgui.BackendFlagsRendererHasVtxOffset)
+	io := imgui.CurrentIO()
+	io.SetConfigFlags(io.ConfigFlags() | imgui.ConfigFlagsDockingEnable)
+	io.SetBackendFlags(io.BackendFlags() | imgui.BackendFlagsRendererHasVtxOffset)
 
 	gl.GenVertexArrays(1, &imguiInfo.VaoID)
 	gl.GenBuffers(1, &imguiInfo.VboID)
@@ -207,11 +205,11 @@ func NewImGui() ImguiInfo {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 	gl.PixelStorei(gl.UNPACK_ROW_LENGTH, 0)
 
-	pixels, width, height, _ := imIO.Fonts().GetTextureDataAsAlpha8()
+	pixels, width, height, _ := io.Fonts().GetTextureDataAsAlpha8()
 	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RED, int32(width), int32(height), 0, gl.RED, gl.UNSIGNED_BYTE, pixels)
 
 	// Store our identifier
-	imIO.Fonts().SetTexID(newimgui.TextureID(uintptr(imguiInfo.TexID)))
+	io.Fonts().SetTexID(imgui.TextureID(uintptr(imguiInfo.TexID)))
 
 	//Shader attributes
 	imguiInfo.Mat.Bind()
@@ -223,220 +221,220 @@ func NewImGui() ImguiInfo {
 	return imguiInfo
 }
 
-func SdlScancodeToImGuiKey(scancode sdl.Scancode) newimgui.Key {
+func SdlScancodeToImGuiKey(scancode sdl.Scancode) imgui.Key {
 
 	switch scancode {
 	case sdl.SCANCODE_TAB:
-		return newimgui.KeyTab
+		return imgui.KeyTab
 	case sdl.SCANCODE_LEFT:
-		return newimgui.KeyLeftArrow
+		return imgui.KeyLeftArrow
 	case sdl.SCANCODE_RIGHT:
-		return newimgui.KeyRightArrow
+		return imgui.KeyRightArrow
 	case sdl.SCANCODE_UP:
-		return newimgui.KeyUpArrow
+		return imgui.KeyUpArrow
 	case sdl.SCANCODE_DOWN:
-		return newimgui.KeyDownArrow
+		return imgui.KeyDownArrow
 	case sdl.SCANCODE_PAGEUP:
-		return newimgui.KeyPageUp
+		return imgui.KeyPageUp
 	case sdl.SCANCODE_PAGEDOWN:
-		return newimgui.KeyPageDown
+		return imgui.KeyPageDown
 	case sdl.SCANCODE_HOME:
-		return newimgui.KeyHome
+		return imgui.KeyHome
 	case sdl.SCANCODE_END:
-		return newimgui.KeyEnd
+		return imgui.KeyEnd
 	case sdl.SCANCODE_INSERT:
-		return newimgui.KeyInsert
+		return imgui.KeyInsert
 	case sdl.SCANCODE_DELETE:
-		return newimgui.KeyDelete
+		return imgui.KeyDelete
 	case sdl.SCANCODE_BACKSPACE:
-		return newimgui.KeyBackspace
+		return imgui.KeyBackspace
 	case sdl.SCANCODE_SPACE:
-		return newimgui.KeySpace
+		return imgui.KeySpace
 	case sdl.SCANCODE_RETURN:
-		return newimgui.KeyEnter
+		return imgui.KeyEnter
 	case sdl.SCANCODE_ESCAPE:
-		return newimgui.KeyEscape
+		return imgui.KeyEscape
 	case sdl.SCANCODE_APOSTROPHE:
-		return newimgui.KeyApostrophe
+		return imgui.KeyApostrophe
 	case sdl.SCANCODE_COMMA:
-		return newimgui.KeyComma
+		return imgui.KeyComma
 	case sdl.SCANCODE_MINUS:
-		return newimgui.KeyMinus
+		return imgui.KeyMinus
 	case sdl.SCANCODE_PERIOD:
-		return newimgui.KeyPeriod
+		return imgui.KeyPeriod
 	case sdl.SCANCODE_SLASH:
-		return newimgui.KeySlash
+		return imgui.KeySlash
 	case sdl.SCANCODE_SEMICOLON:
-		return newimgui.KeySemicolon
+		return imgui.KeySemicolon
 	case sdl.SCANCODE_EQUALS:
-		return newimgui.KeyEqual
+		return imgui.KeyEqual
 	case sdl.SCANCODE_LEFTBRACKET:
-		return newimgui.KeyLeftBracket
+		return imgui.KeyLeftBracket
 	case sdl.SCANCODE_BACKSLASH:
-		return newimgui.KeyBackslash
+		return imgui.KeyBackslash
 	case sdl.SCANCODE_RIGHTBRACKET:
-		return newimgui.KeyRightBracket
+		return imgui.KeyRightBracket
 	case sdl.SCANCODE_GRAVE:
-		return newimgui.KeyGraveAccent
+		return imgui.KeyGraveAccent
 	case sdl.SCANCODE_CAPSLOCK:
-		return newimgui.KeyCapsLock
+		return imgui.KeyCapsLock
 	case sdl.SCANCODE_SCROLLLOCK:
-		return newimgui.KeyScrollLock
+		return imgui.KeyScrollLock
 	case sdl.SCANCODE_NUMLOCKCLEAR:
-		return newimgui.KeyNumLock
+		return imgui.KeyNumLock
 	case sdl.SCANCODE_PRINTSCREEN:
-		return newimgui.KeyPrintScreen
+		return imgui.KeyPrintScreen
 	case sdl.SCANCODE_PAUSE:
-		return newimgui.KeyPause
+		return imgui.KeyPause
 	case sdl.SCANCODE_KP_0:
-		return newimgui.KeyKeypad0
+		return imgui.KeyKeypad0
 	case sdl.SCANCODE_KP_1:
-		return newimgui.KeyKeypad1
+		return imgui.KeyKeypad1
 	case sdl.SCANCODE_KP_2:
-		return newimgui.KeyKeypad2
+		return imgui.KeyKeypad2
 	case sdl.SCANCODE_KP_3:
-		return newimgui.KeyKeypad3
+		return imgui.KeyKeypad3
 	case sdl.SCANCODE_KP_4:
-		return newimgui.KeyKeypad4
+		return imgui.KeyKeypad4
 	case sdl.SCANCODE_KP_5:
-		return newimgui.KeyKeypad5
+		return imgui.KeyKeypad5
 	case sdl.SCANCODE_KP_6:
-		return newimgui.KeyKeypad6
+		return imgui.KeyKeypad6
 	case sdl.SCANCODE_KP_7:
-		return newimgui.KeyKeypad7
+		return imgui.KeyKeypad7
 	case sdl.SCANCODE_KP_8:
-		return newimgui.KeyKeypad8
+		return imgui.KeyKeypad8
 	case sdl.SCANCODE_KP_9:
-		return newimgui.KeyKeypad9
+		return imgui.KeyKeypad9
 	case sdl.SCANCODE_KP_PERIOD:
-		return newimgui.KeyKeypadDecimal
+		return imgui.KeyKeypadDecimal
 	case sdl.SCANCODE_KP_DIVIDE:
-		return newimgui.KeyKeypadDivide
+		return imgui.KeyKeypadDivide
 	case sdl.SCANCODE_KP_MULTIPLY:
-		return newimgui.KeyKeypadMultiply
+		return imgui.KeyKeypadMultiply
 	case sdl.SCANCODE_KP_MINUS:
-		return newimgui.KeyKeypadSubtract
+		return imgui.KeyKeypadSubtract
 	case sdl.SCANCODE_KP_PLUS:
-		return newimgui.KeyKeypadAdd
+		return imgui.KeyKeypadAdd
 	case sdl.SCANCODE_KP_ENTER:
-		return newimgui.KeyKeypadEnter
+		return imgui.KeyKeypadEnter
 	case sdl.SCANCODE_KP_EQUALS:
-		return newimgui.KeyKeypadEqual
+		return imgui.KeyKeypadEqual
 	case sdl.SCANCODE_LSHIFT:
-		return newimgui.KeyLeftShift
+		return imgui.KeyLeftShift
 	case sdl.SCANCODE_LCTRL:
-		return newimgui.KeyLeftCtrl
+		return imgui.KeyLeftCtrl
 	case sdl.SCANCODE_LALT:
-		return newimgui.KeyLeftAlt
+		return imgui.KeyLeftAlt
 	case sdl.SCANCODE_LGUI:
-		return newimgui.KeyLeftSuper
+		return imgui.KeyLeftSuper
 	case sdl.SCANCODE_RSHIFT:
-		return newimgui.KeyRightShift
+		return imgui.KeyRightShift
 	case sdl.SCANCODE_RCTRL:
-		return newimgui.KeyRightCtrl
+		return imgui.KeyRightCtrl
 	case sdl.SCANCODE_RALT:
-		return newimgui.KeyRightAlt
+		return imgui.KeyRightAlt
 	case sdl.SCANCODE_RGUI:
-		return newimgui.KeyRightSuper
+		return imgui.KeyRightSuper
 	case sdl.SCANCODE_MENU:
-		return newimgui.KeyMenu
+		return imgui.KeyMenu
 	case sdl.SCANCODE_0:
-		return newimgui.Key0
+		return imgui.Key0
 	case sdl.SCANCODE_1:
-		return newimgui.Key1
+		return imgui.Key1
 	case sdl.SCANCODE_2:
-		return newimgui.Key2
+		return imgui.Key2
 	case sdl.SCANCODE_3:
-		return newimgui.Key3
+		return imgui.Key3
 	case sdl.SCANCODE_4:
-		return newimgui.Key4
+		return imgui.Key4
 	case sdl.SCANCODE_5:
-		return newimgui.Key5
+		return imgui.Key5
 	case sdl.SCANCODE_6:
-		return newimgui.Key6
+		return imgui.Key6
 	case sdl.SCANCODE_7:
-		return newimgui.Key7
+		return imgui.Key7
 	case sdl.SCANCODE_8:
-		return newimgui.Key8
+		return imgui.Key8
 	case sdl.SCANCODE_9:
-		return newimgui.Key9
+		return imgui.Key9
 	case sdl.SCANCODE_A:
-		return newimgui.KeyA
+		return imgui.KeyA
 	case sdl.SCANCODE_B:
-		return newimgui.KeyB
+		return imgui.KeyB
 	case sdl.SCANCODE_C:
-		return newimgui.KeyC
+		return imgui.KeyC
 	case sdl.SCANCODE_D:
-		return newimgui.KeyD
+		return imgui.KeyD
 	case sdl.SCANCODE_E:
-		return newimgui.KeyE
+		return imgui.KeyE
 	case sdl.SCANCODE_F:
-		return newimgui.KeyF
+		return imgui.KeyF
 	case sdl.SCANCODE_G:
-		return newimgui.KeyG
+		return imgui.KeyG
 	case sdl.SCANCODE_H:
-		return newimgui.KeyH
+		return imgui.KeyH
 	case sdl.SCANCODE_I:
-		return newimgui.KeyI
+		return imgui.KeyI
 	case sdl.SCANCODE_J:
-		return newimgui.KeyJ
+		return imgui.KeyJ
 	case sdl.SCANCODE_K:
-		return newimgui.KeyK
+		return imgui.KeyK
 	case sdl.SCANCODE_L:
-		return newimgui.KeyL
+		return imgui.KeyL
 	case sdl.SCANCODE_M:
-		return newimgui.KeyM
+		return imgui.KeyM
 	case sdl.SCANCODE_N:
-		return newimgui.KeyN
+		return imgui.KeyN
 	case sdl.SCANCODE_O:
-		return newimgui.KeyO
+		return imgui.KeyO
 	case sdl.SCANCODE_P:
-		return newimgui.KeyP
+		return imgui.KeyP
 	case sdl.SCANCODE_Q:
-		return newimgui.KeyQ
+		return imgui.KeyQ
 	case sdl.SCANCODE_R:
-		return newimgui.KeyR
+		return imgui.KeyR
 	case sdl.SCANCODE_S:
-		return newimgui.KeyS
+		return imgui.KeyS
 	case sdl.SCANCODE_T:
-		return newimgui.KeyT
+		return imgui.KeyT
 	case sdl.SCANCODE_U:
-		return newimgui.KeyU
+		return imgui.KeyU
 	case sdl.SCANCODE_V:
-		return newimgui.KeyV
+		return imgui.KeyV
 	case sdl.SCANCODE_W:
-		return newimgui.KeyW
+		return imgui.KeyW
 	case sdl.SCANCODE_X:
-		return newimgui.KeyX
+		return imgui.KeyX
 	case sdl.SCANCODE_Y:
-		return newimgui.KeyY
+		return imgui.KeyY
 	case sdl.SCANCODE_Z:
-		return newimgui.KeyZ
+		return imgui.KeyZ
 	case sdl.SCANCODE_F1:
-		return newimgui.KeyF1
+		return imgui.KeyF1
 	case sdl.SCANCODE_F2:
-		return newimgui.KeyF2
+		return imgui.KeyF2
 	case sdl.SCANCODE_F3:
-		return newimgui.KeyF3
+		return imgui.KeyF3
 	case sdl.SCANCODE_F4:
-		return newimgui.KeyF4
+		return imgui.KeyF4
 	case sdl.SCANCODE_F5:
-		return newimgui.KeyF5
+		return imgui.KeyF5
 	case sdl.SCANCODE_F6:
-		return newimgui.KeyF6
+		return imgui.KeyF6
 	case sdl.SCANCODE_F7:
-		return newimgui.KeyF7
+		return imgui.KeyF7
 	case sdl.SCANCODE_F8:
-		return newimgui.KeyF8
+		return imgui.KeyF8
 	case sdl.SCANCODE_F9:
-		return newimgui.KeyF9
+		return imgui.KeyF9
 	case sdl.SCANCODE_F10:
-		return newimgui.KeyF10
+		return imgui.KeyF10
 	case sdl.SCANCODE_F11:
-		return newimgui.KeyF11
+		return imgui.KeyF11
 	case sdl.SCANCODE_F12:
-		return newimgui.KeyF12
+		return imgui.KeyF12
 	default:
-		return newimgui.KeyNone
+		return imgui.KeyNone
 	}
 }

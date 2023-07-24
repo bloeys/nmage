@@ -4,7 +4,6 @@ import (
 	"runtime"
 
 	imgui "github.com/AllenDang/cimgui-go"
-	newimgui "github.com/AllenDang/cimgui-go"
 	"github.com/bloeys/nmage/assert"
 	"github.com/bloeys/nmage/input"
 	"github.com/bloeys/nmage/renderer"
@@ -28,7 +27,7 @@ type Window struct {
 func (w *Window) handleInputs() {
 
 	input.EventLoopStart()
-	imIO := newimgui.CurrentIO()
+	imIo := imgui.CurrentIO()
 
 	// @TODO: Would be nice to have imgui package process its own events via a callback instead of it being part of engine code
 	for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -46,32 +45,32 @@ func (w *Window) handleInputs() {
 			input.HandleMouseWheelEvent(e)
 
 			xDelta, yDelta := input.GetMouseWheelMotion()
-			imIO.AddMouseWheelDelta(float32(xDelta), float32(yDelta))
+			imIo.AddMouseWheelDelta(float32(xDelta), float32(yDelta))
 
 		case *sdl.KeyboardEvent:
 
 			input.HandleKeyboardEvent(e)
-			imIO.AddKeyEvent(nmageimgui.SdlScancodeToImGuiKey(e.Keysym.Scancode), e.Type == sdl.KEYDOWN)
+			imIo.AddKeyEvent(nmageimgui.SdlScancodeToImGuiKey(e.Keysym.Scancode), e.Type == sdl.KEYDOWN)
 
 			// Send modifier key updates to imgui
 			if e.Keysym.Sym == sdl.K_LCTRL || e.Keysym.Sym == sdl.K_RCTRL {
-				imIO.SetKeyCtrl(e.Type == sdl.KEYDOWN)
+				imIo.SetKeyCtrl(e.Type == sdl.KEYDOWN)
 			}
 
 			if e.Keysym.Sym == sdl.K_LSHIFT || e.Keysym.Sym == sdl.K_RSHIFT {
-				imIO.SetKeyShift(e.Type == sdl.KEYDOWN)
+				imIo.SetKeyShift(e.Type == sdl.KEYDOWN)
 			}
 
 			if e.Keysym.Sym == sdl.K_LALT || e.Keysym.Sym == sdl.K_RALT {
-				imIO.SetKeyAlt(e.Type == sdl.KEYDOWN)
+				imIo.SetKeyAlt(e.Type == sdl.KEYDOWN)
 			}
 
 			if e.Keysym.Sym == sdl.K_LGUI || e.Keysym.Sym == sdl.K_RGUI {
-				imIO.SetKeySuper(e.Type == sdl.KEYDOWN)
+				imIo.SetKeySuper(e.Type == sdl.KEYDOWN)
 			}
 
 		case *sdl.TextInputEvent:
-			imIO.AddInputCharactersUTF8(e.GetText())
+			imIo.AddInputCharactersUTF8(e.GetText())
 
 		case *sdl.MouseButtonEvent:
 			input.HandleMouseBtnEvent(e)
@@ -91,11 +90,11 @@ func (w *Window) handleInputs() {
 
 	// If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release events that are shorter than 1 frame.
 	x, y, _ := sdl.GetMouseState()
-	imIO.SetMousePos(imgui.Vec2{X: float32(x), Y: float32(y)})
+	imIo.SetMousePos(imgui.Vec2{X: float32(x), Y: float32(y)})
 
-	imIO.SetMouseButtonDown(0, input.MouseDown(sdl.BUTTON_LEFT))
-	imIO.SetMouseButtonDown(1, input.MouseDown(sdl.BUTTON_RIGHT))
-	imIO.SetMouseButtonDown(2, input.MouseDown(sdl.BUTTON_MIDDLE))
+	imIo.SetMouseButtonDown(0, input.MouseDown(sdl.BUTTON_LEFT))
+	imIo.SetMouseButtonDown(1, input.MouseDown(sdl.BUTTON_RIGHT))
+	imIo.SetMouseButtonDown(2, input.MouseDown(sdl.BUTTON_MIDDLE))
 }
 
 func (w *Window) handleWindowResize() {

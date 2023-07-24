@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"runtime"
 
-	newimgui "github.com/AllenDang/cimgui-go"
+	imgui "github.com/AllenDang/cimgui-go"
 	"github.com/bloeys/gglm/gglm"
 	"github.com/bloeys/nmage/assets"
 	"github.com/bloeys/nmage/camera"
@@ -267,28 +267,31 @@ func (g *OurGame) Update() {
 	g.updateCameraLookAround()
 	g.updateCameraPos()
 
+	imgui.ShowDemoWindow()
+
 	//Rotating cubes
 	if input.KeyDown(sdl.K_SPACE) {
 		cubeModelMat.Rotate(10*timing.DT()*gglm.Deg2Rad, gglm.NewVec3(1, 1, 1).Normalize())
 	}
 
-	if newimgui.DragFloat3("Cam Pos", &cam.Pos.Data) {
+	imgui.Begin("Debug controls")
+	if imgui.DragFloat3("Cam Pos", &cam.Pos.Data) {
 		updateViewMat()
 	}
-	if newimgui.DragFloat3("Cam Forward", &cam.Forward.Data) {
+	if imgui.DragFloat3("Cam Forward", &cam.Forward.Data) {
 		updateViewMat()
 	}
 
-	if newimgui.DragFloat3("Light Pos 1", &lightPos1.Data) {
+	if imgui.DragFloat3("Light Pos 1", &lightPos1.Data) {
 		simpleMat.SetUnifVec3("lightPos1", lightPos1)
 	}
 
-	if newimgui.DragFloat3("Light Color 1", &lightColor1.Data) {
+	if imgui.DragFloat3("Light Color 1", &lightColor1.Data) {
 		simpleMat.SetUnifVec3("lightColor1", lightColor1)
 	}
 
-	// an cimgui text box using cimgui
-	newimgui.InputTextWithHint("Test", "", &testString, newimgui.InputTextFlagsAllowTabInput, nil)
+	imgui.Checkbox("Debug depth buffer", &debugDrawDepthBuffer)
+	imgui.End()
 
 	if input.KeyClicked(sdl.K_F4) {
 		fmt.Printf("Pos: %s; Forward: %s; |Forward|: %f\n", cam.Pos.String(), cam.Forward.String(), cam.Forward.Mag())
@@ -360,7 +363,6 @@ func (g *OurGame) updateCameraPos() {
 func (g *OurGame) Render() {
 
 	matToUse := simpleMat
-	newimgui.Checkbox("Debug depth buffer", &debugDrawDepthBuffer)
 	if debugDrawDepthBuffer {
 		matToUse = debugDepthMat
 	}
