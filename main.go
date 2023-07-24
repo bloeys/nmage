@@ -287,12 +287,17 @@ func (g *OurGame) Update() {
 		simpleMat.SetUnifVec3("lightColor1", lightColor1)
 	}
 
+	// an cimgui text box using cimgui
+	newimgui.InputTextWithHint("Test", "", &testString, newimgui.InputTextFlagsAllowTabInput, nil)
+
 	if input.KeyClicked(sdl.K_F4) {
 		fmt.Printf("Pos: %s; Forward: %s; |Forward|: %f\n", cam.Pos.String(), cam.Forward.String(), cam.Forward.Mag())
 	}
 
 	g.Win.SDLWin.SetTitle(fmt.Sprint("nMage (", timing.GetAvgFPS(), " fps)"))
 }
+
+var testString string
 
 func (g *OurGame) updateCameraLookAround() {
 

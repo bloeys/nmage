@@ -49,10 +49,25 @@ func (w *Window) handleInputs() {
 			imIO.AddMouseWheelDelta(float32(xDelta), float32(yDelta))
 
 		case *sdl.KeyboardEvent:
-			input.HandleKeyboardEvent(e)
 
-			if e.Type == sdl.KEYDOWN || e.Type == sdl.KEYUP {
-				imIO.AddKeyEvent(nmageimgui.SdlScancodeToImGuiKey(e.Keysym.Scancode), e.Type == sdl.KEYDOWN)
+			input.HandleKeyboardEvent(e)
+			imIO.AddKeyEvent(nmageimgui.SdlScancodeToImGuiKey(e.Keysym.Scancode), e.Type == sdl.KEYDOWN)
+
+			// Send modifier key updates to imgui
+			if e.Keysym.Sym == sdl.K_LCTRL || e.Keysym.Sym == sdl.K_RCTRL {
+				imIO.SetKeyCtrl(e.Type == sdl.KEYDOWN)
+			}
+
+			if e.Keysym.Sym == sdl.K_LSHIFT || e.Keysym.Sym == sdl.K_RSHIFT {
+				imIO.SetKeyShift(e.Type == sdl.KEYDOWN)
+			}
+
+			if e.Keysym.Sym == sdl.K_LALT || e.Keysym.Sym == sdl.K_RALT {
+				imIO.SetKeyAlt(e.Type == sdl.KEYDOWN)
+			}
+
+			if e.Keysym.Sym == sdl.K_LGUI || e.Keysym.Sym == sdl.K_RGUI {
+				imIO.SetKeySuper(e.Type == sdl.KEYDOWN)
 			}
 
 		case *sdl.TextInputEvent:
