@@ -6,6 +6,7 @@ import (
 	"github.com/bloeys/nmage/materials"
 	"github.com/bloeys/nmage/timing"
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 type ImguiInfo struct {
@@ -219,97 +220,223 @@ func NewImGui() ImguiInfo {
 	imguiInfo.Mat.EnableAttribute("Color")
 	imguiInfo.Mat.UnBind()
 
-	// //Init imgui input mapping
-	// keys := map[int]int{
-	// 	newimgui.KeyTab:        sdl.SCANCODE_TAB,
-	// 	newimgui.KeyLeftArrow:  sdl.SCANCODE_LEFT,
-	// 	newimgui.KeyRightArrow: sdl.SCANCODE_RIGHT,
-	// 	newimgui.KeyUpArrow:    sdl.SCANCODE_UP,
-	// 	newimgui.KeyDownArrow:  sdl.SCANCODE_DOWN,
-	// 	newimgui.KeyPageUp:     sdl.SCANCODE_PAGEUP,
-	// 	newimgui.KeyPageDown:   sdl.SCANCODE_PAGEDOWN,
-	// 	newimgui.KeyHome:       sdl.SCANCODE_HOME,
-	// 	newimgui.KeyEnd:        sdl.SCANCODE_END,
-	// 	newimgui.KeyInsert:     sdl.SCANCODE_INSERT,
-	// 	newimgui.KeyDelete:     sdl.SCANCODE_DELETE,
-	// 	newimgui.KeyBackspace:  sdl.SCANCODE_BACKSPACE,
-	// 	newimgui.KeySpace:      sdl.SCANCODE_BACKSPACE,
-	// 	newimgui.KeyEnter:      sdl.SCANCODE_RETURN,
-	// 	newimgui.KeyEscape:     sdl.SCANCODE_ESCAPE,
-	// 	newimgui.KeyA:          sdl.SCANCODE_A,
-	// 	newimgui.KeyC:          sdl.SCANCODE_C,
-	// 	newimgui.KeyV:          sdl.SCANCODE_V,
-	// 	newimgui.KeyX:          sdl.SCANCODE_X,
-	// 	newimgui.KeyY:          sdl.SCANCODE_Y,
-	// 	newimgui.KeyZ:          sdl.SCANCODE_Z,
-	// }
-
 	return imguiInfo
 }
 
-// func newImGUI() ImguiInfo {
+func SdlScancodeToImGuiKey(scancode sdl.Scancode) newimgui.Key {
 
-// 	imguiInfo := ImguiInfo{
-// 		ImCtx: imgui.CreateContext(nil),
-// 		Mat:   materials.NewMaterialSrc("ImGUI Mat", []byte(imguiShdrSrc)),
-// 	}
-
-// 	imIO := imgui.CurrentIO()
-// 	imIO.SetBackendFlags(imIO.GetBackendFlags() | imgui.BackendFlagsRendererHasVtxOffset)
-
-// 	gl.GenVertexArrays(1, &imguiInfo.VaoID)
-// 	gl.GenBuffers(1, &imguiInfo.VboID)
-// 	gl.GenBuffers(1, &imguiInfo.IndexBufID)
-// 	gl.GenTextures(1, &imguiInfo.TexID)
-
-// 	// Upload font to gpu
-// 	gl.BindTexture(gl.TEXTURE_2D, imguiInfo.TexID)
-// 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-// 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-// 	gl.PixelStorei(gl.UNPACK_ROW_LENGTH, 0)
-
-// 	image := imIO.Fonts().TextureDataAlpha8()
-// 	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RED, int32(image.Width), int32(image.Height), 0, gl.RED, gl.UNSIGNED_BYTE, image.Pixels)
-
-// 	// Store our identifier
-// 	imIO.Fonts().SetTextureID(imgui.TextureID(imguiInfo.TexID))
-
-// 	//Shader attributes
-// 	imguiInfo.Mat.Bind()
-// 	imguiInfo.Mat.EnableAttribute("Position")
-// 	imguiInfo.Mat.EnableAttribute("UV")
-// 	imguiInfo.Mat.EnableAttribute("Color")
-// 	imguiInfo.Mat.UnBind()
-
-// 	//Init imgui input mapping
-// 	keys := map[int]int{
-// 		imgui.KeyTab:        sdl.SCANCODE_TAB,
-// 		imgui.KeyLeftArrow:  sdl.SCANCODE_LEFT,
-// 		imgui.KeyRightArrow: sdl.SCANCODE_RIGHT,
-// 		imgui.KeyUpArrow:    sdl.SCANCODE_UP,
-// 		imgui.KeyDownArrow:  sdl.SCANCODE_DOWN,
-// 		imgui.KeyPageUp:     sdl.SCANCODE_PAGEUP,
-// 		imgui.KeyPageDown:   sdl.SCANCODE_PAGEDOWN,
-// 		imgui.KeyHome:       sdl.SCANCODE_HOME,
-// 		imgui.KeyEnd:        sdl.SCANCODE_END,
-// 		imgui.KeyInsert:     sdl.SCANCODE_INSERT,
-// 		imgui.KeyDelete:     sdl.SCANCODE_DELETE,
-// 		imgui.KeyBackspace:  sdl.SCANCODE_BACKSPACE,
-// 		imgui.KeySpace:      sdl.SCANCODE_BACKSPACE,
-// 		imgui.KeyEnter:      sdl.SCANCODE_RETURN,
-// 		imgui.KeyEscape:     sdl.SCANCODE_ESCAPE,
-// 		imgui.KeyA:          sdl.SCANCODE_A,
-// 		imgui.KeyC:          sdl.SCANCODE_C,
-// 		imgui.KeyV:          sdl.SCANCODE_V,
-// 		imgui.KeyX:          sdl.SCANCODE_X,
-// 		imgui.KeyY:          sdl.SCANCODE_Y,
-// 		imgui.KeyZ:          sdl.SCANCODE_Z,
-// 	}
-
-// 	// Keyboard mapping. ImGui will use those indices to peek into the io.KeysDown[] array.
-// 	for imguiKey, nativeKey := range keys {
-// 		imIO.KeyMap(imguiKey, nativeKey)
-// 	}
-
-// 	return imguiInfo
-// }
+	switch scancode {
+	case sdl.SCANCODE_TAB:
+		return newimgui.KeyTab
+	case sdl.SCANCODE_LEFT:
+		return newimgui.KeyLeftArrow
+	case sdl.SCANCODE_RIGHT:
+		return newimgui.KeyRightArrow
+	case sdl.SCANCODE_UP:
+		return newimgui.KeyUpArrow
+	case sdl.SCANCODE_DOWN:
+		return newimgui.KeyDownArrow
+	case sdl.SCANCODE_PAGEUP:
+		return newimgui.KeyPageUp
+	case sdl.SCANCODE_PAGEDOWN:
+		return newimgui.KeyPageDown
+	case sdl.SCANCODE_HOME:
+		return newimgui.KeyHome
+	case sdl.SCANCODE_END:
+		return newimgui.KeyEnd
+	case sdl.SCANCODE_INSERT:
+		return newimgui.KeyInsert
+	case sdl.SCANCODE_DELETE:
+		return newimgui.KeyDelete
+	case sdl.SCANCODE_BACKSPACE:
+		return newimgui.KeyBackspace
+	case sdl.SCANCODE_SPACE:
+		return newimgui.KeySpace
+	case sdl.SCANCODE_RETURN:
+		return newimgui.KeyEnter
+	case sdl.SCANCODE_ESCAPE:
+		return newimgui.KeyEscape
+	case sdl.SCANCODE_APOSTROPHE:
+		return newimgui.KeyApostrophe
+	case sdl.SCANCODE_COMMA:
+		return newimgui.KeyComma
+	case sdl.SCANCODE_MINUS:
+		return newimgui.KeyMinus
+	case sdl.SCANCODE_PERIOD:
+		return newimgui.KeyPeriod
+	case sdl.SCANCODE_SLASH:
+		return newimgui.KeySlash
+	case sdl.SCANCODE_SEMICOLON:
+		return newimgui.KeySemicolon
+	case sdl.SCANCODE_EQUALS:
+		return newimgui.KeyEqual
+	case sdl.SCANCODE_LEFTBRACKET:
+		return newimgui.KeyLeftBracket
+	case sdl.SCANCODE_BACKSLASH:
+		return newimgui.KeyBackslash
+	case sdl.SCANCODE_RIGHTBRACKET:
+		return newimgui.KeyRightBracket
+	case sdl.SCANCODE_GRAVE:
+		return newimgui.KeyGraveAccent
+	case sdl.SCANCODE_CAPSLOCK:
+		return newimgui.KeyCapsLock
+	case sdl.SCANCODE_SCROLLLOCK:
+		return newimgui.KeyScrollLock
+	case sdl.SCANCODE_NUMLOCKCLEAR:
+		return newimgui.KeyNumLock
+	case sdl.SCANCODE_PRINTSCREEN:
+		return newimgui.KeyPrintScreen
+	case sdl.SCANCODE_PAUSE:
+		return newimgui.KeyPause
+	case sdl.SCANCODE_KP_0:
+		return newimgui.KeyKeypad0
+	case sdl.SCANCODE_KP_1:
+		return newimgui.KeyKeypad1
+	case sdl.SCANCODE_KP_2:
+		return newimgui.KeyKeypad2
+	case sdl.SCANCODE_KP_3:
+		return newimgui.KeyKeypad3
+	case sdl.SCANCODE_KP_4:
+		return newimgui.KeyKeypad4
+	case sdl.SCANCODE_KP_5:
+		return newimgui.KeyKeypad5
+	case sdl.SCANCODE_KP_6:
+		return newimgui.KeyKeypad6
+	case sdl.SCANCODE_KP_7:
+		return newimgui.KeyKeypad7
+	case sdl.SCANCODE_KP_8:
+		return newimgui.KeyKeypad8
+	case sdl.SCANCODE_KP_9:
+		return newimgui.KeyKeypad9
+	case sdl.SCANCODE_KP_PERIOD:
+		return newimgui.KeyKeypadDecimal
+	case sdl.SCANCODE_KP_DIVIDE:
+		return newimgui.KeyKeypadDivide
+	case sdl.SCANCODE_KP_MULTIPLY:
+		return newimgui.KeyKeypadMultiply
+	case sdl.SCANCODE_KP_MINUS:
+		return newimgui.KeyKeypadSubtract
+	case sdl.SCANCODE_KP_PLUS:
+		return newimgui.KeyKeypadAdd
+	case sdl.SCANCODE_KP_ENTER:
+		return newimgui.KeyKeypadEnter
+	case sdl.SCANCODE_KP_EQUALS:
+		return newimgui.KeyKeypadEqual
+	case sdl.SCANCODE_LSHIFT:
+		return newimgui.KeyLeftShift
+	case sdl.SCANCODE_LCTRL:
+		return newimgui.KeyLeftCtrl
+	case sdl.SCANCODE_LALT:
+		return newimgui.KeyLeftAlt
+	case sdl.SCANCODE_LGUI:
+		return newimgui.KeyLeftSuper
+	case sdl.SCANCODE_RSHIFT:
+		return newimgui.KeyRightShift
+	case sdl.SCANCODE_RCTRL:
+		return newimgui.KeyRightCtrl
+	case sdl.SCANCODE_RALT:
+		return newimgui.KeyRightAlt
+	case sdl.SCANCODE_RGUI:
+		return newimgui.KeyRightSuper
+	case sdl.SCANCODE_MENU:
+		return newimgui.KeyMenu
+	case sdl.SCANCODE_0:
+		return newimgui.Key0
+	case sdl.SCANCODE_1:
+		return newimgui.Key1
+	case sdl.SCANCODE_2:
+		return newimgui.Key2
+	case sdl.SCANCODE_3:
+		return newimgui.Key3
+	case sdl.SCANCODE_4:
+		return newimgui.Key4
+	case sdl.SCANCODE_5:
+		return newimgui.Key5
+	case sdl.SCANCODE_6:
+		return newimgui.Key6
+	case sdl.SCANCODE_7:
+		return newimgui.Key7
+	case sdl.SCANCODE_8:
+		return newimgui.Key8
+	case sdl.SCANCODE_9:
+		return newimgui.Key9
+	case sdl.SCANCODE_A:
+		return newimgui.KeyA
+	case sdl.SCANCODE_B:
+		return newimgui.KeyB
+	case sdl.SCANCODE_C:
+		return newimgui.KeyC
+	case sdl.SCANCODE_D:
+		return newimgui.KeyD
+	case sdl.SCANCODE_E:
+		return newimgui.KeyE
+	case sdl.SCANCODE_F:
+		return newimgui.KeyF
+	case sdl.SCANCODE_G:
+		return newimgui.KeyG
+	case sdl.SCANCODE_H:
+		return newimgui.KeyH
+	case sdl.SCANCODE_I:
+		return newimgui.KeyI
+	case sdl.SCANCODE_J:
+		return newimgui.KeyJ
+	case sdl.SCANCODE_K:
+		return newimgui.KeyK
+	case sdl.SCANCODE_L:
+		return newimgui.KeyL
+	case sdl.SCANCODE_M:
+		return newimgui.KeyM
+	case sdl.SCANCODE_N:
+		return newimgui.KeyN
+	case sdl.SCANCODE_O:
+		return newimgui.KeyO
+	case sdl.SCANCODE_P:
+		return newimgui.KeyP
+	case sdl.SCANCODE_Q:
+		return newimgui.KeyQ
+	case sdl.SCANCODE_R:
+		return newimgui.KeyR
+	case sdl.SCANCODE_S:
+		return newimgui.KeyS
+	case sdl.SCANCODE_T:
+		return newimgui.KeyT
+	case sdl.SCANCODE_U:
+		return newimgui.KeyU
+	case sdl.SCANCODE_V:
+		return newimgui.KeyV
+	case sdl.SCANCODE_W:
+		return newimgui.KeyW
+	case sdl.SCANCODE_X:
+		return newimgui.KeyX
+	case sdl.SCANCODE_Y:
+		return newimgui.KeyY
+	case sdl.SCANCODE_Z:
+		return newimgui.KeyZ
+	case sdl.SCANCODE_F1:
+		return newimgui.KeyF1
+	case sdl.SCANCODE_F2:
+		return newimgui.KeyF2
+	case sdl.SCANCODE_F3:
+		return newimgui.KeyF3
+	case sdl.SCANCODE_F4:
+		return newimgui.KeyF4
+	case sdl.SCANCODE_F5:
+		return newimgui.KeyF5
+	case sdl.SCANCODE_F6:
+		return newimgui.KeyF6
+	case sdl.SCANCODE_F7:
+		return newimgui.KeyF7
+	case sdl.SCANCODE_F8:
+		return newimgui.KeyF8
+	case sdl.SCANCODE_F9:
+		return newimgui.KeyF9
+	case sdl.SCANCODE_F10:
+		return newimgui.KeyF10
+	case sdl.SCANCODE_F11:
+		return newimgui.KeyF11
+	case sdl.SCANCODE_F12:
+		return newimgui.KeyF12
+	default:
+		return newimgui.KeyNone
+	}
+}

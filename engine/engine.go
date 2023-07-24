@@ -3,11 +3,13 @@ package engine
 import (
 	"runtime"
 
+	imgui "github.com/AllenDang/cimgui-go"
 	newimgui "github.com/AllenDang/cimgui-go"
 	"github.com/bloeys/nmage/assert"
 	"github.com/bloeys/nmage/input"
 	"github.com/bloeys/nmage/renderer"
 	"github.com/bloeys/nmage/timing"
+	nmageimgui "github.com/bloeys/nmage/ui/imgui"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -49,15 +51,12 @@ func (w *Window) handleInputs() {
 		case *sdl.KeyboardEvent:
 			input.HandleKeyboardEvent(e)
 
-			if e.Type == sdl.KEYDOWN {
-				// @TODO: Move to new ImGui input system
-				// imIO.KeyPress(int(e.Keysym.Scancode))
-			} else if e.Type == sdl.KEYUP {
-				// imIO.KeyRelease(int(e.Keysym.Scancode))
+			if e.Type == sdl.KEYDOWN || e.Type == sdl.KEYUP {
+				imIO.AddKeyEvent(nmageimgui.SdlScancodeToImGuiKey(e.Keysym.Scancode), e.Type == sdl.KEYDOWN)
 			}
 
 		case *sdl.TextInputEvent:
-			// imIO.AddInputCharacters(string(e.Text[:]))
+			imIO.AddInputCharactersUTF8(e.GetText())
 
 		case *sdl.MouseButtonEvent:
 			input.HandleMouseBtnEvent(e)
@@ -76,16 +75,12 @@ func (w *Window) handleInputs() {
 	}
 
 	// If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release events that are shorter than 1 frame.
-	// x, y, _ := sdl.GetMouseState()
-	// imIO.SetMousePosition(imgui.Vec2{X: float32(x), Y: float32(y)})
+	x, y, _ := sdl.GetMouseState()
+	imIO.SetMousePos(imgui.Vec2{X: float32(x), Y: float32(y)})
 
 	imIO.SetMouseButtonDown(0, input.MouseDown(sdl.BUTTON_LEFT))
 	imIO.SetMouseButtonDown(1, input.MouseDown(sdl.BUTTON_RIGHT))
 	imIO.SetMouseButtonDown(2, input.MouseDown(sdl.BUTTON_MIDDLE))
-
-	// imIO.KeyShift(sdl.SCANCODE_LSHIFT, sdl.SCANCODE_RSHIFT)
-	// imIO.KeyCtrl(sdl.SCANCODE_LCTRL, sdl.SCANCODE_RCTRL)
-	// imIO.KeyAlt(sdl.SCANCODE_LALT, sdl.SCANCODE_RALT)
 }
 
 func (w *Window) handleWindowResize() {
