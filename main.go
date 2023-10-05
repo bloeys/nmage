@@ -89,16 +89,17 @@ func Test() {
 
 	lvl := level.NewLevel("test level", 1000)
 	e1 := lvl.Registry.NewEntity()
+	e1CompContainer := entity.NewCompContainer()
 
-	trComp := entity.GetComp[*TransformComp](e1)
+	trComp := entity.GetComp[*TransformComp](&e1CompContainer)
 	fmt.Println("Get comp before adding any:", trComp)
 
-	entity.AddComp(e1, &TransformComp{
+	entity.AddComp(e1, &e1CompContainer, &TransformComp{
 		Pos:   gglm.NewVec3(0, 0, 0),
 		Rot:   gglm.NewQuatEulerXYZ(0, 0, 0),
 		Scale: gglm.NewVec3(0, 0, 0),
 	})
-	trComp = entity.GetComp[*TransformComp](e1)
+	trComp = entity.GetComp[*TransformComp](&e1CompContainer)
 	fmt.Println("Get transform comp:", trComp)
 
 	fmt.Printf("Entity: %+v\n", e1)

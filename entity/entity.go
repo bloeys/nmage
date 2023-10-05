@@ -16,20 +16,12 @@ const (
 type EntityHandle uint64
 
 type Entity struct {
-
 	// Byte 1: Generation; Byte 2: Flags; Bytes 3-8: Index
-	ID    EntityHandle
-	Comps []Comp
+	ID EntityHandle
 }
 
 func (e *Entity) HasFlag(ef EntityFlag) bool {
 	return GetFlags(e.ID)&ef > 0
-}
-
-func (e *Entity) UpdateAllComps() {
-	for i := 0; i < len(e.Comps); i++ {
-		e.Comps[i].Update()
-	}
 }
 
 func GetGeneration(id EntityHandle) byte {

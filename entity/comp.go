@@ -5,7 +5,7 @@ import "github.com/bloeys/nmage/assert"
 type Comp interface {
 	// This ensures that implementors of the Comp interface
 	// always embed BaseComp
-	base()
+	baseComp()
 
 	Name() string
 	Init(parent *Entity)
@@ -13,15 +13,23 @@ type Comp interface {
 	Destroy()
 }
 
-func AddComp[T Comp](e *Entity, c T) {
+func NewCompContainer() CompContainer {
+	return CompContainer{Comps: []Comp{}}
+}
 
-	assert.T(!HasComp[T](e), "Entity with id '%v' already has component of type '%T'", e.ID, c)
+type CompContainer struct {
+	Comps []Comp
+}
 
-	e.Comps = append(e.Comps, c)
+func AddComp[T Comp](e *Entity, cc *CompContainer, c T) {
+
+	assert.T(!HasComp[T](cc), "Entity with id '%v' already has component of type '%T'", e.ID, c)
+
+	cc.Comps = append(cc.Comps, c)
 	c.Init(e)
 }
 
-func HasComp[T Comp](e *Entity) bool {
+func HasComp[T Comp](e *CompContainer) bool {
 
 	for i := 0; i < len(e.Comps); i++ {
 
@@ -34,7 +42,7 @@ func HasComp[T Comp](e *Entity) bool {
 	return false
 }
 
-func GetComp[T Comp](e *Entity) (out T) {
+func GetComp[T Comp](e *CompContainer) (out T) {
 
 	for i := 0; i < len(e.Comps); i++ {
 
@@ -48,7 +56,7 @@ func GetComp[T Comp](e *Entity) (out T) {
 }
 
 // DestroyComp calls Destroy on the component and then removes it from the entities component list
-func DestroyComp[T Comp](e *Entity) {
+func DestroyComp[T Comp](e *CompContainer) {
 
 	for i := 0; i < len(e.Comps); i++ {
 

@@ -8,7 +8,7 @@ type BaseComp struct {
 	Entity *Entity
 }
 
-func (b *BaseComp) base() {
+func (b *BaseComp) baseComp() {
 }
 
 func (b *BaseComp) Init(parent *Entity) {
