@@ -113,6 +113,14 @@ func (r *Registry[T]) Free(id Handle) {
 	r.FreeListSize++
 }
 
+func (r *Registry[T]) NewIterator() Iterator[T] {
+	return Iterator[T]{
+		registry:       r,
+		remainingItems: r.ItemCount,
+		currIndex:      0,
+	}
+}
+
 func NewRegistry[T any](size uint32) *Registry[T] {
 	assert.T(size > 0, "Registry size must be more than zero")
 	return &Registry[T]{
