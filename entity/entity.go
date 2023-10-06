@@ -13,14 +13,27 @@ const (
 	IndexBitMask        = 0x00_00_FFFF_FFFF_FFFF
 )
 
+type Entity interface {
+	baseEntity()
+	GetHandle() EntityHandle
+}
+
 type EntityHandle uint64
 
-type Entity struct {
+var _ Entity = &BaseEntity{}
+
+type BaseEntity struct {
 	// Byte 1: Generation; Byte 2: Flags; Bytes 3-8: Index
 	ID EntityHandle
 }
 
-func (e *Entity) HasFlag(ef EntityFlag) bool {
+func (be BaseEntity) baseEntity() {}
+
+func (be BaseEntity) GetHandle() EntityHandle {
+	return be.ID
+}
+
+func (e *BaseEntity) HasFlag(ef EntityFlag) bool {
 	return GetFlags(e.ID)&ef > 0
 }
 

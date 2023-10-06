@@ -8,7 +8,7 @@ type Comp interface {
 	baseComp()
 
 	Name() string
-	Init(parent *Entity)
+	Init(parent *BaseEntity)
 	Update()
 	Destroy()
 }
@@ -21,7 +21,7 @@ type CompContainer struct {
 	Comps []Comp
 }
 
-func AddComp[T Comp](e *Entity, cc *CompContainer, c T) {
+func AddComp[T Comp](e *BaseEntity, cc *CompContainer, c T) {
 
 	assert.T(!HasComp[T](cc), "Entity with id '%v' already has component of type '%T'", e.ID, c)
 

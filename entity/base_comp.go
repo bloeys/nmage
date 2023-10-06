@@ -5,23 +5,23 @@ import "github.com/bloeys/nmage/assert"
 var _ Comp = &BaseComp{}
 
 type BaseComp struct {
-	Entity *Entity
+	Entity *BaseEntity
 }
 
 func (b BaseComp) baseComp() {
 }
 
-func (b *BaseComp) Init(parent *Entity) {
+func (b *BaseComp) Init(parent *BaseEntity) {
 	assert.T(parent != nil, "Component was initialized with a nil parent. That is not allowed.")
 	b.Entity = parent
 }
 
-func (b *BaseComp) Name() string {
+func (b BaseComp) Name() string {
 	return "Base Component"
 }
 
-func (b *BaseComp) Update() {
+func (b BaseComp) Update() {
 }
 
-func (b *BaseComp) Destroy() {
+func (b BaseComp) Destroy() {
 }

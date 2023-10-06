@@ -17,18 +17,18 @@ type freeListitem struct {
 
 type Registry struct {
 	EntityCount uint64
-	Entities    []Entity
+	Entities    []BaseEntity
 
 	FreeList     *freeListitem
 	FreeListSize uint32
 }
 
-func (r *Registry) NewEntity() *Entity {
+func (r *Registry) NewEntity() *BaseEntity {
 
 	assert.T(r.EntityCount < uint64(len(r.Entities)), "Can not add more entities to registry because it is full")
 
 	entityToUseIndex := uint64(0)
-	var entityToUse *Entity = nil
+	var entityToUse *BaseEntity = nil
 
 	if r.FreeList != nil && r.FreeListSize > FreeListUsageThreshold {
 
@@ -61,7 +61,7 @@ func (r *Registry) NewEntity() *Entity {
 	return entityToUse
 }
 
-func (r *Registry) GetEntity(id EntityHandle) *Entity {
+func (r *Registry) GetEntity(id EntityHandle) *BaseEntity {
 
 	index := GetIndex(id)
 	gen := GetGeneration(id)
@@ -99,6 +99,6 @@ func (r *Registry) FreeEntity(id EntityHandle) {
 func NewRegistry(size uint32) *Registry {
 	assert.T(size > 0, "Registry size must be more than zero")
 	return &Registry{
-		Entities: make([]Entity, size),
+		Entities: make([]BaseEntity, size),
 	}
 }
