@@ -29,12 +29,10 @@ func (it *Iterator[T]) Next() (*T, Handle) {
 		return nil, 0
 	}
 
-	// This does two things:
-	//
-	// First is if IsDone() only checked 'remainingItems', then when Next() returns the last item IsDone() will immediately be true which will cause loops to exit before processing that last item!
+	// If IsDone() only checked 'remainingItems', then when Next() returns the last item IsDone() will immediately be true which will cause loops to exit before processing the last item!
 	// However, with this check IsDone will remain false until Next() is called at least one more time after returning the last item which ensures the last item is processed in the loop.
 	//
-	// Secondly, if the iterator is created on an empty registry, the IsDone() check above won't pass, however the check here will correctly handle the case and make IsDone start returning true
+	// In cases where iterator is created on an empty registry, IsDone() will report true and the above check will return early
 	if it.remainingItems == 0 {
 		it.currIndex = -1
 		return nil, 0
@@ -62,5 +60,13 @@ func (it *Iterator[T]) Next() (*T, Handle) {
 }
 
 func (it *Iterator[T]) IsDone() bool {
-	return it.currIndex == -1 && it.remainingItems == 0
+
+	if it.remainingItems != 0 {
+		return false
+	}
+
+	// We have two cases here:
+	// 1. Index of zero means Next() never returned an item. Remaining items of zero without returning anything means we have an empty registry and so its safe to report done
+	// 2. Negative index means Next() has detected we reached the end and that its safe to report being done
+	return it.currIndex <= 0
 }
