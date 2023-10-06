@@ -11,15 +11,32 @@ package registry
 //   - If items were both added and removed, the iterator might follow either of the previous 2 cases or a combination of them
 //
 // To summarize: The iterator will *never* return more items than were alive at the time of its creation, and will *never* return freed items
+//
+// Example usage:
+//
+//	for item, handle := it.Next(); !it.IsDone(); item, handle = it.Next() {
+//		// Do stuff
+//	}
 type Iterator[T any] struct {
 	registry       *Registry[T]
-	remainingItems uint64
+	remainingItems uint
 	currIndex      int
 }
 
 func (it *Iterator[T]) Next() (*T, Handle) {
 
 	if it.IsDone() {
+		return nil, 0
+	}
+
+	// This does two things:
+	//
+	// First is if IsDone() only checked 'remainingItems', then when Next() returns the last item IsDone() will immediately be true which will cause loops to exit before processing that last item!
+	// However, with this check IsDone will remain false until Next() is called at least one more time after returning the last item which ensures the last item is processed in the loop.
+	//
+	// Secondly, if the iterator is created on an empty registry, the IsDone() check above won't pass, however the check here will correctly handle the case and make IsDone start returning true
+	if it.remainingItems == 0 {
+		it.currIndex = -1
 		return nil, 0
 	}
 
@@ -39,10 +56,11 @@ func (it *Iterator[T]) Next() (*T, Handle) {
 	// means that the registry changed since we were created, and that remainingItems is not accurate.
 	//
 	// As such, we zero remaining items so that this iterator is considered done
+	it.currIndex = -1
 	it.remainingItems = 0
 	return nil, 0
 }
 
 func (it *Iterator[T]) IsDone() bool {
-	return it.remainingItems == 0
+	return it.currIndex == -1 && it.remainingItems == 0
 }

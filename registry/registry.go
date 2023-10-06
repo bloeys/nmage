@@ -18,7 +18,7 @@ type freeListitem struct {
 //
 // It is NOT safe to concurrently create or free items. However, it is SAFE to concurrently get items
 type Registry[T any] struct {
-	ItemCount uint64
+	ItemCount uint
 	Handles   []Handle
 	Items     []T
 
@@ -32,7 +32,7 @@ type Registry[T any] struct {
 
 func (r *Registry[T]) New() (*T, Handle) {
 
-	assert.T(r.ItemCount < uint64(len(r.Handles)), "Can not add more entities to registry because it is full")
+	assert.T(r.ItemCount < uint(len(r.Handles)), "Can not add more entities to registry because it is full")
 
 	var index uint64 = math.MaxUint64
 
