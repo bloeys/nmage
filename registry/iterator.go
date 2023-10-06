@@ -45,9 +45,10 @@ func (it *Iterator[T]) Next() (*T, Handle) {
 			continue
 		}
 
-		it.remainingItems--
+		item := &it.registry.Items[it.currIndex]
 		it.currIndex++
-		return &it.registry.Items[it.currIndex], handle
+		it.remainingItems--
+		return item, handle
 	}
 
 	// If we reached here means we iterated to the end and didn't find anything, which probably
