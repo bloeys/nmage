@@ -1,6 +1,9 @@
 package entity
 
-import "github.com/bloeys/nmage/assert"
+import (
+	"github.com/bloeys/nmage/assert"
+	"github.com/bloeys/nmage/registry"
+)
 
 type Comp interface {
 	// This ensures that implementors of the Comp interface
@@ -8,7 +11,7 @@ type Comp interface {
 	baseComp()
 
 	Name() string
-	Init(parent *BaseEntity)
+	Init(parentHandle registry.Handle)
 	Update()
 	Destroy()
 }
@@ -21,12 +24,12 @@ type CompContainer struct {
 	Comps []Comp
 }
 
-func AddComp[T Comp](e *BaseEntity, cc *CompContainer, c T) {
+func AddComp[T Comp](entityHandle registry.Handle, cc *CompContainer, c T) {
 
-	assert.T(!HasComp[T](cc), "Entity with id '%v' already has component of type '%T'", e.ID, c)
+	assert.T(!HasComp[T](cc), "Entity with id '%v' already has component of type '%T'", entityHandle, c)
 
 	cc.Comps = append(cc.Comps, c)
-	c.Init(e)
+	c.Init(entityHandle)
 }
 
 func HasComp[T Comp](e *CompContainer) bool {

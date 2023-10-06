@@ -11,10 +11,10 @@ import (
 	"github.com/bloeys/nmage/engine"
 	"github.com/bloeys/nmage/entity"
 	"github.com/bloeys/nmage/input"
-	"github.com/bloeys/nmage/level"
 	"github.com/bloeys/nmage/logging"
 	"github.com/bloeys/nmage/materials"
 	"github.com/bloeys/nmage/meshes"
+	"github.com/bloeys/nmage/registry"
 	"github.com/bloeys/nmage/renderer/rend3dgl"
 	"github.com/bloeys/nmage/timing"
 	nmageimgui "github.com/bloeys/nmage/ui/imgui"
@@ -87,14 +87,17 @@ func (t *TransformComp) Name() string {
 
 func Test() {
 
-	lvl := level.NewLevel("test level", 1000)
-	e1 := lvl.Registry.NewEntity()
+	// lvl := level.NewLevel("test level")
+	testRegistry := registry.NewRegistry[int](100)
+
+	e1, e1Handle := testRegistry.New()
 	e1CompContainer := entity.NewCompContainer()
+	fmt.Printf("Entity 1: %+v; Handle: %+v; Index: %+v; Gen: %+v; Flags: %+v\n", e1, e1Handle, e1Handle.Index(), e1Handle.Generation(), e1Handle.Flags())
 
 	trComp := entity.GetComp[*TransformComp](&e1CompContainer)
 	fmt.Println("Get comp before adding any:", trComp)
 
-	entity.AddComp(e1, &e1CompContainer, &TransformComp{
+	entity.AddComp(e1Handle, &e1CompContainer, &TransformComp{
 		Pos:   gglm.NewVec3(0, 0, 0),
 		Rot:   gglm.NewQuatEulerXYZ(0, 0, 0),
 		Scale: gglm.NewVec3(0, 0, 0),
@@ -102,10 +105,21 @@ func Test() {
 	trComp = entity.GetComp[*TransformComp](&e1CompContainer)
 	fmt.Println("Get transform comp:", trComp)
 
-	fmt.Printf("Entity: %+v\n", e1)
-	fmt.Printf("Entity: %+v\n", lvl.Registry.NewEntity())
-	fmt.Printf("Entity: %+v\n", lvl.Registry.NewEntity())
-	fmt.Printf("Entity: %+v\n", lvl.Registry.NewEntity())
+	e2, e2Handle := testRegistry.New()
+	e3, e3Handle := testRegistry.New()
+	e4, e4Handle := testRegistry.New()
+	fmt.Printf("Entity 2: %+v; Handle: %+v; Index: %+v; Gen: %+v; Flags: %+v\n", e2, e2Handle, e2Handle.Index(), e2Handle.Generation(), e2Handle.Flags())
+	fmt.Printf("Entity 3: %+v; Handle: %+v; Index: %+v; Gen: %+v; Flags: %+v\n", e3, e3Handle, e3Handle.Index(), e3Handle.Generation(), e3Handle.Flags())
+	fmt.Printf("Entity 4: %+v; Handle: %+v; Index: %+v; Gen: %+v; Flags: %+v\n", e4, e4Handle, e4Handle.Index(), e4Handle.Generation(), e4Handle.Flags())
+
+	*e2 = 1000
+	fmt.Printf("Entity 2 value after registry get: %+v\n", *testRegistry.Get(e2Handle))
+
+	testRegistry.Free(e2Handle)
+	fmt.Printf("Entity 2 value after free: %+v\n", testRegistry.Get(e2Handle))
+
+	e5, e5Handle := testRegistry.New()
+	fmt.Printf("Entity 5: %+v; Handle: %+v; Index: %+v; Gen: %+v; Flags: %+v\n", e5, e5Handle, e5Handle.Index(), e5Handle.Generation(), e5Handle.Flags())
 }
 
 func main() {
@@ -300,8 +314,6 @@ func (g *OurGame) Update() {
 
 	g.Win.SDLWin.SetTitle(fmt.Sprint("nMage (", timing.GetAvgFPS(), " fps)"))
 }
-
-var testString string
 
 func (g *OurGame) updateCameraLookAround() {
 
