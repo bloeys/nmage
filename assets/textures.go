@@ -80,6 +80,7 @@ func LoadTexturePNG(file string, loadOptions *TextureLoadOptions) (Texture, erro
 		Height: int32(nrgbaImg.Bounds().Dy()),
 		Width:  int32(nrgbaImg.Bounds().Dx()),
 	}
+	flipImgPixelsVertically(tex.Pixels, int(tex.Width), int(tex.Height))
 
 	//Prepare opengl stuff
 	gl.GenTextures(1, &tex.TexID)
@@ -122,6 +123,7 @@ func LoadTextureInMemPngImg(img image.Image, loadOptions *TextureLoadOptions) (T
 		Height: int32(nrgbaImg.Bounds().Dy()),
 		Width:  int32(nrgbaImg.Bounds().Dx()),
 	}
+	flipImgPixelsVertically(tex.Pixels, int(tex.Width), int(tex.Height))
 
 	//Prepare opengl stuff
 	gl.GenTextures(1, &tex.TexID)
@@ -181,6 +183,7 @@ func LoadTextureJpeg(file string, loadOptions *TextureLoadOptions) (Texture, err
 		Height: int32(nrgbaImg.Bounds().Dy()),
 		Width:  int32(nrgbaImg.Bounds().Dx()),
 	}
+	flipImgPixelsVertically(tex.Pixels, int(tex.Width), int(tex.Height))
 
 	//Prepare opengl stuff
 	gl.GenTextures(1, &tex.TexID)
@@ -266,4 +269,21 @@ func LoadCubemapTextures(rightTex, leftTex, topTex, botTex, frontTex, backTex st
 	gl.TexParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE)
 
 	return cmap, nil
+}
+
+func flipImgPixelsVertically(bytes []byte, width, height int) {
+
+	// Flip the image vertically such that (e.g. in an image of 10 rows) rows 0<->9, 1<->8, 2<->7 etc are swapped.
+	// We do this because images are usually stored top-left to bottom-right, while opengl stores textures bottom-left to top-right, so if we don't swap
+	// rows textures will appear inverted
+	rowData := make([]byte, width)
+	for rowNum := 0; rowNum < height/2; rowNum++ {
+
+		upperRowStartIndex := rowNum * width
+		lowerRowStartIndex := (height - rowNum - 1) * width
+		copy(rowData, bytes[upperRowStartIndex:upperRowStartIndex+width])
+		copy(bytes[upperRowStartIndex:upperRowStartIndex+width], bytes[lowerRowStartIndex:lowerRowStartIndex+width])
+		copy(bytes[lowerRowStartIndex:lowerRowStartIndex+width], rowData)
+
+	}
 }
