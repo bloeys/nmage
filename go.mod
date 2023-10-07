@@ -12,3 +12,8 @@ require (
 )
 
 require github.com/AllenDang/cimgui-go v0.0.0-20230720025235-f2ff398a66b2
+
+require (
+	github.com/mandykoh/go-parallel v0.1.0 // indirect
+	github.com/mandykoh/prism v0.35.1 // indirect
+)

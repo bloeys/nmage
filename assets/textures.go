@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"image"
-	"image/color"
 	"image/jpeg"
 	"image/png"
 	"io"
@@ -14,6 +13,7 @@ import (
 	"unsafe"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/mandykoh/prism"
 )
 
 type ColorFormat int
@@ -67,16 +67,19 @@ func LoadTexturePNG(file string, loadOptions *TextureLoadOptions) (Texture, erro
 		return Texture{}, err
 	}
 
-	img, err := png.Decode(bytes.NewReader(fileBytes))
+	bytesReader := bytes.NewReader(fileBytes)
+	img, err := png.Decode(bytesReader)
 	if err != nil {
 		return Texture{}, err
 	}
 
+	nrgbaImg := prism.ConvertImageToNRGBA(img, 2)
 	tex := Texture{
-		Path: file,
+		Path:   file,
+		Pixels: nrgbaImg.Pix,
+		Height: int32(nrgbaImg.Bounds().Dy()),
+		Width:  int32(nrgbaImg.Bounds().Dx()),
 	}
-
-	tex.Pixels, tex.Width, tex.Height = pixelsFromNrgbaPng(img)
 
 	//Prepare opengl stuff
 	gl.GenTextures(1, &tex.TexID)
@@ -89,7 +92,7 @@ func LoadTexturePNG(file string, loadOptions *TextureLoadOptions) (Texture, erro
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 
 	// load and generate the texture
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, tex.Width, tex.Height, 0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&tex.Pixels[0]))
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.SRGB8_ALPHA8, tex.Width, tex.Height, 0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&tex.Pixels[0]))
 
 	if loadOptions.GenMipMaps {
 		gl.GenerateMipmap(tex.TexID)
@@ -112,8 +115,13 @@ func LoadTextureInMemPngImg(img image.Image, loadOptions *TextureLoadOptions) (T
 		loadOptions = &TextureLoadOptions{}
 	}
 
-	tex := Texture{}
-	tex.Pixels, tex.Width, tex.Height = pixelsFromNrgbaPng(img)
+	nrgbaImg := prism.ConvertImageToNRGBA(img, 2)
+	tex := Texture{
+		Path:   "",
+		Pixels: nrgbaImg.Pix,
+		Height: int32(nrgbaImg.Bounds().Dy()),
+		Width:  int32(nrgbaImg.Bounds().Dx()),
+	}
 
 	//Prepare opengl stuff
 	gl.GenTextures(1, &tex.TexID)
@@ -126,7 +134,7 @@ func LoadTextureInMemPngImg(img image.Image, loadOptions *TextureLoadOptions) (T
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 
 	// load and generate the texture
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, tex.Width, tex.Height, 0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&tex.Pixels[0]))
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.SRGB8_ALPHA8, tex.Width, tex.Height, 0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&tex.Pixels[0]))
 
 	if loadOptions.GenMipMaps {
 		gl.GenerateMipmap(tex.TexID)
@@ -166,11 +174,13 @@ func LoadTextureJpeg(file string, loadOptions *TextureLoadOptions) (Texture, err
 		return Texture{}, err
 	}
 
+	nrgbaImg := prism.ConvertImageToNRGBA(img, 2)
 	tex := Texture{
-		Path: file,
+		Path:   file,
+		Pixels: nrgbaImg.Pix,
+		Height: int32(nrgbaImg.Bounds().Dy()),
+		Width:  int32(nrgbaImg.Bounds().Dx()),
 	}
-
-	tex.Pixels, tex.Width, tex.Height = pixelsFromNrgbaPng(img)
 
 	//Prepare opengl stuff
 	gl.GenTextures(1, &tex.TexID)
@@ -183,7 +193,7 @@ func LoadTextureJpeg(file string, loadOptions *TextureLoadOptions) (Texture, err
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 
 	// load and generate the texture
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, tex.Width, tex.Height, 0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&tex.Pixels[0]))
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.SRGB8_ALPHA8, tex.Width, tex.Height, 0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&tex.Pixels[0]))
 
 	if loadOptions.GenMipMaps {
 		gl.GenerateMipmap(tex.TexID)
@@ -200,65 +210,14 @@ func LoadTextureJpeg(file string, loadOptions *TextureLoadOptions) (Texture, err
 	return tex, nil
 }
 
-func pixelsFromNrgbaPng(img image.Image) (pixels []byte, width, height int32) {
-
-	//NOTE: Load bottom left to top right because this is the texture coordinate system used by OpenGL
-	//NOTE: We only support 8-bit channels (32-bit colors) for now
-	i := 0
-	width, height = int32(img.Bounds().Dx()), int32(img.Bounds().Dy())
-	pixels = make([]byte, img.Bounds().Dx()*img.Bounds().Dy()*4)
-	for y := img.Bounds().Dy() - 1; y >= 0; y-- {
-		for x := 0; x < img.Bounds().Dx(); x++ {
-
-			c := color.NRGBAModel.Convert(img.At(x, y)).(color.NRGBA)
-
-			pixels[i] = c.R
-			pixels[i+1] = c.G
-			pixels[i+2] = c.B
-			pixels[i+3] = c.A
-
-			i += 4
-		}
-	}
-
-	return pixels, width, height
-}
-
-func pixelsFromNrgbaJpg(img image.Image) (pixels []byte, width, height int32) {
-
-	//NOTE: Load bottom left to top right because this is the texture coordinate system used by OpenGL
-	//NOTE: We only support 8-bit channels (32-bit colors) for now
-	i := 0
-	width, height = int32(img.Bounds().Dx()), int32(img.Bounds().Dy())
-	pixels = make([]byte, img.Bounds().Dx()*img.Bounds().Dy()*4)
-	for y := img.Bounds().Dy() - 1; y >= 0; y-- {
-		for x := 0; x < img.Bounds().Dx(); x++ {
-
-			c := color.NRGBAModel.Convert(img.At(x, y)).(color.NRGBA)
-
-			pixels[i] = c.R
-			pixels[i+1] = c.G
-			pixels[i+2] = c.B
-			pixels[i+3] = c.A
-
-			i += 4
-		}
-	}
-
-	return pixels, width, height
-}
-
 func LoadCubemapTextures(rightTex, leftTex, topTex, botTex, frontTex, backTex string) (Cubemap, error) {
 
 	var imgDecoder func(r io.Reader) (image.Image, error)
-	var pixelDecoder func(image.Image) ([]byte, int32, int32)
 	ext := strings.ToLower(path.Ext(rightTex))
 	if ext == ".jpg" || ext == ".jpeg" {
 		imgDecoder = jpeg.Decode
-		pixelDecoder = pixelsFromNrgbaJpg
 	} else if ext == ".png" {
 		imgDecoder = png.Decode
-		pixelDecoder = pixelsFromNrgbaPng
 	} else {
 		return Cubemap{}, fmt.Errorf("unknown image extension: %s. Expected one of: .jpg, .jpeg, .png", ext)
 	}
@@ -292,9 +251,11 @@ func LoadCubemapTextures(rightTex, leftTex, topTex, botTex, frontTex, backTex st
 			return Cubemap{}, err
 		}
 
-		pixels, width, height := pixelDecoder(img)
+		nrgbaImg := prism.ConvertImageToNRGBA(img, 2)
+		height := int32(nrgbaImg.Bounds().Dy())
+		width := int32(nrgbaImg.Bounds().Dx())
 
-		gl.TexImage2D(uint32(gl.TEXTURE_CUBE_MAP_POSITIVE_X)+i, 0, gl.RGBA8, int32(width), int32(height), 0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&pixels[0]))
+		gl.TexImage2D(uint32(gl.TEXTURE_CUBE_MAP_POSITIVE_X)+i, 0, gl.RGBA8, int32(width), int32(height), 0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&nrgbaImg.Pix[0]))
 	}
 
 	// set the texture wrapping/filtering options (on the currently bound texture object)
