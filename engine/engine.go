@@ -142,6 +142,9 @@ func initSDL() error {
 	sdl.GLSetAttribute(sdl.GL_DEPTH_SIZE, 24)
 	sdl.GLSetAttribute(sdl.GL_STENCIL_SIZE, 8)
 
+	// Allow us to do MSAA
+	sdl.GLSetAttribute(sdl.GL_MULTISAMPLEBUFFERS, 8)
+
 	sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_CORE)
 
 	return nil
@@ -198,6 +201,7 @@ func initOpenGL() error {
 	gl.FrontFace(gl.CCW)
 
 	gl.Enable(gl.BLEND)
+	gl.Enable(gl.MULTISAMPLE)
 	gl.Enable(gl.FRAMEBUFFER_SRGB)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
@@ -221,5 +225,14 @@ func SetVSync(enabled bool) {
 		sdl.GLSetSwapInterval(1)
 	} else {
 		sdl.GLSetSwapInterval(0)
+	}
+}
+
+func SetMSAA(isEnabled bool) {
+
+	if isEnabled {
+		gl.Enable(gl.MULTISAMPLE)
+	} else {
+		gl.Disable(gl.MULTISAMPLE)
 	}
 }

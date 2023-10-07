@@ -141,7 +141,9 @@ func main() {
 	}
 	defer window.Destroy()
 
+	engine.SetMSAA(true)
 	engine.SetVSync(false)
+	engine.SetSrgbFramebuffer(true)
 
 	game := &OurGame{
 		Win:       window,
