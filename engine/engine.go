@@ -198,10 +198,20 @@ func initOpenGL() error {
 	gl.FrontFace(gl.CCW)
 
 	gl.Enable(gl.BLEND)
+	gl.Enable(gl.FRAMEBUFFER_SRGB)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 	gl.ClearColor(0, 0, 0, 1)
 	return nil
+}
+
+func SetSrgbFramebuffer(isEnabled bool) {
+
+	if isEnabled {
+		gl.Enable(gl.FRAMEBUFFER_SRGB)
+	} else {
+		gl.Disable(gl.FRAMEBUFFER_SRGB)
+	}
 }
 
 func SetVSync(enabled bool) {

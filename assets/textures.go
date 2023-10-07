@@ -45,6 +45,7 @@ type TextureLoadOptions struct {
 	WriteToCache     bool
 	GenMipMaps       bool
 	KeepPixelsInMem  bool
+	TextureIsSrgba   bool
 }
 
 type Cubemap struct {
@@ -102,7 +103,12 @@ func LoadTexturePNG(file string, loadOptions *TextureLoadOptions) (Texture, erro
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 
 	// load and generate the texture
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.SRGB_ALPHA, tex.Width, tex.Height, 0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&tex.Pixels[0]))
+	internalFormat := int32(gl.RGBA8)
+	if loadOptions.TextureIsSrgba {
+		internalFormat = gl.SRGB_ALPHA
+	}
+
+	gl.TexImage2D(gl.TEXTURE_2D, 0, internalFormat, tex.Width, tex.Height, 0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&tex.Pixels[0]))
 
 	if loadOptions.GenMipMaps {
 		gl.GenerateMipmap(tex.TexID)
@@ -145,7 +151,12 @@ func LoadTextureInMemPngImg(img image.Image, loadOptions *TextureLoadOptions) (T
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 
 	// load and generate the texture
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.SRGB8_ALPHA8, tex.Width, tex.Height, 0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&tex.Pixels[0]))
+	internalFormat := int32(gl.RGBA8)
+	if loadOptions.TextureIsSrgba {
+		internalFormat = gl.SRGB_ALPHA
+	}
+
+	gl.TexImage2D(gl.TEXTURE_2D, 0, internalFormat, tex.Width, tex.Height, 0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&tex.Pixels[0]))
 
 	if loadOptions.GenMipMaps {
 		gl.GenerateMipmap(tex.TexID)
@@ -205,7 +216,12 @@ func LoadTextureJpeg(file string, loadOptions *TextureLoadOptions) (Texture, err
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 
 	// load and generate the texture
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.SRGB8_ALPHA8, tex.Width, tex.Height, 0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&tex.Pixels[0]))
+	internalFormat := int32(gl.RGBA8)
+	if loadOptions.TextureIsSrgba {
+		internalFormat = gl.SRGB_ALPHA
+	}
+
+	gl.TexImage2D(gl.TEXTURE_2D, 0, internalFormat, tex.Width, tex.Height, 0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&tex.Pixels[0]))
 
 	if loadOptions.GenMipMaps {
 		gl.GenerateMipmap(tex.TexID)
