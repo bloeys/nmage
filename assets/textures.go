@@ -23,11 +23,20 @@ const (
 )
 
 type Texture struct {
-	//Path only exists for textures loaded from disk
-	Path   string
-	TexID  uint32
-	Width  int32
+	// Path only exists for textures loaded from disk
+	Path string
+
+	TexID uint32
+
+	// Width is the width of the texture in pixels (pixels per row).
+	// Note that the number of bytes constituting a row is MORE than this (e.g. for RGBA8, bytesPerRow=width*4, since we have 4 bytes per pixel)
+	Width int32
+
+	// Height is the height of the texture in pixels (pixels per column).
+	// Note that the number of bytes constituting a column is MORE than this (e.g. for RGBA8, bytesPerColumn=height*4, since we have 4 bytes per pixel)
 	Height int32
+
+	// Pixels usually stored in RGBA format
 	Pixels []byte
 }
 
@@ -77,10 +86,10 @@ func LoadTexturePNG(file string, loadOptions *TextureLoadOptions) (Texture, erro
 	tex := Texture{
 		Path:   file,
 		Pixels: nrgbaImg.Pix,
-		Height: int32(nrgbaImg.Bounds().Dy()),
 		Width:  int32(nrgbaImg.Bounds().Dx()),
+		Height: int32(nrgbaImg.Bounds().Dy()),
 	}
-	flipImgPixelsVertically(tex.Pixels, int(tex.Width), int(tex.Height))
+	flipImgPixelsVertically(tex.Pixels, int(tex.Width), int(tex.Height), 4)
 
 	//Prepare opengl stuff
 	gl.GenTextures(1, &tex.TexID)
@@ -93,7 +102,7 @@ func LoadTexturePNG(file string, loadOptions *TextureLoadOptions) (Texture, erro
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 
 	// load and generate the texture
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.SRGB8_ALPHA8, tex.Width, tex.Height, 0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&tex.Pixels[0]))
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.SRGB_ALPHA, tex.Width, tex.Height, 0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&tex.Pixels[0]))
 
 	if loadOptions.GenMipMaps {
 		gl.GenerateMipmap(tex.TexID)
@@ -123,7 +132,7 @@ func LoadTextureInMemPngImg(img image.Image, loadOptions *TextureLoadOptions) (T
 		Height: int32(nrgbaImg.Bounds().Dy()),
 		Width:  int32(nrgbaImg.Bounds().Dx()),
 	}
-	flipImgPixelsVertically(tex.Pixels, int(tex.Width), int(tex.Height))
+	flipImgPixelsVertically(tex.Pixels, int(tex.Width), int(tex.Height), 4)
 
 	//Prepare opengl stuff
 	gl.GenTextures(1, &tex.TexID)
@@ -183,7 +192,7 @@ func LoadTextureJpeg(file string, loadOptions *TextureLoadOptions) (Texture, err
 		Height: int32(nrgbaImg.Bounds().Dy()),
 		Width:  int32(nrgbaImg.Bounds().Dx()),
 	}
-	flipImgPixelsVertically(tex.Pixels, int(tex.Width), int(tex.Height))
+	flipImgPixelsVertically(tex.Pixels, int(tex.Width), int(tex.Height), 4)
 
 	//Prepare opengl stuff
 	gl.GenTextures(1, &tex.TexID)
@@ -271,19 +280,20 @@ func LoadCubemapTextures(rightTex, leftTex, topTex, botTex, frontTex, backTex st
 	return cmap, nil
 }
 
-func flipImgPixelsVertically(bytes []byte, width, height int) {
+func flipImgPixelsVertically(bytes []byte, width, height, bytesPerPixel int) {
 
 	// Flip the image vertically such that (e.g. in an image of 10 rows) rows 0<->9, 1<->8, 2<->7 etc are swapped.
 	// We do this because images are usually stored top-left to bottom-right, while opengl stores textures bottom-left to top-right, so if we don't swap
 	// rows textures will appear inverted
-	rowData := make([]byte, width)
+	widthInBytes := width * bytesPerPixel
+	rowData := make([]byte, width*bytesPerPixel)
 	for rowNum := 0; rowNum < height/2; rowNum++ {
 
-		upperRowStartIndex := rowNum * width
-		lowerRowStartIndex := (height - rowNum - 1) * width
-		copy(rowData, bytes[upperRowStartIndex:upperRowStartIndex+width])
-		copy(bytes[upperRowStartIndex:upperRowStartIndex+width], bytes[lowerRowStartIndex:lowerRowStartIndex+width])
-		copy(bytes[lowerRowStartIndex:lowerRowStartIndex+width], rowData)
+		upperRowStartIndex := rowNum * widthInBytes
+		lowerRowStartIndex := (height - rowNum - 1) * widthInBytes
+		copy(rowData, bytes[upperRowStartIndex:upperRowStartIndex+widthInBytes])
+		copy(bytes[upperRowStartIndex:upperRowStartIndex+widthInBytes], bytes[lowerRowStartIndex:lowerRowStartIndex+widthInBytes])
+		copy(bytes[lowerRowStartIndex:lowerRowStartIndex+widthInBytes], rowData)
 
 	}
 }
