@@ -213,7 +213,7 @@ func (g *OurGame) Init() {
 	skyboxMat = materials.NewMaterial("Skybox mat", "./res/shaders/skybox.glsl")
 
 	//Load meshes
-	cubeMesh, err = meshes.NewMesh("Cube", "./res/models/plane.fbx", 0)
+	cubeMesh, err = meshes.NewMesh("Cube", "./res/models/tex-cube.fbx", 0)
 	if err != nil {
 		logging.ErrLog.Fatalln("Failed to load mesh. Err: ", err)
 	}
@@ -229,7 +229,7 @@ func (g *OurGame) Init() {
 	}
 
 	//Load textures
-	tex, err := assets.LoadTexturePNG("./res/textures/logo - black bg.png", nil)
+	tex, err := assets.LoadTexturePNG("./res/textures/pallete-endesga-64-1x.png", nil)
 	if err != nil {
 		logging.ErrLog.Fatalln("Failed to load texture. Err: ", err)
 	}
@@ -383,7 +383,6 @@ func (g *OurGame) Render() {
 	tempModelMatrix := cubeModelMat.Clone()
 	window.Rend.Draw(chairMesh, tempModelMatrix, matToUse)
 
-	tempModelMatrix.Rotate(90*gglm.Deg2Rad, gglm.NewVec3(0, 1, 0))
 	rowSize := 1
 	for y := 0; y < rowSize; y++ {
 		for x := 0; x < rowSize; x++ {
