@@ -147,7 +147,7 @@ func (i *ImguiInfo) AddFontTTF(fontPath string, fontSize float32, fontConfig *im
 	return f
 }
 
-const imguiShdrSrc = `
+const DefaultImguiShader = `
 //shader:vertex
 #version 410
 
@@ -183,11 +183,20 @@ void main()
 }
 `
 
-func NewImGui() ImguiInfo {
+// NewImGui setups imgui using the passed shader.
+// If the path is empty a default nMage shader is used
+func NewImGui(shaderPath string) ImguiInfo {
+
+	var imguiMat *materials.Material
+	if shaderPath == "" {
+		imguiMat = materials.NewMaterialSrc("ImGUI Mat", []byte(DefaultImguiShader))
+	} else {
+		imguiMat = materials.NewMaterial("ImGUI Mat", shaderPath)
+	}
 
 	imguiInfo := ImguiInfo{
 		ImCtx: imgui.CreateContext(),
-		Mat:   materials.NewMaterialSrc("ImGUI Mat", []byte(imguiShdrSrc)),
+		Mat:   imguiMat,
 	}
 
 	io := imgui.CurrentIO()

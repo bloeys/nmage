@@ -238,7 +238,12 @@ func LoadTextureJpeg(file string, loadOptions *TextureLoadOptions) (Texture, err
 	return tex, nil
 }
 
-func LoadCubemapTextures(rightTex, leftTex, topTex, botTex, frontTex, backTex string) (Cubemap, error) {
+// LoadCubemapTextures only supports the 'TextureIsSrgba' option
+func LoadCubemapTextures(rightTex, leftTex, topTex, botTex, frontTex, backTex string, loadOptions *TextureLoadOptions) (Cubemap, error) {
+
+	if loadOptions == nil {
+		loadOptions = &TextureLoadOptions{}
+	}
 
 	var imgDecoder func(r io.Reader) (image.Image, error)
 	ext := strings.ToLower(path.Ext(rightTex))
@@ -283,7 +288,12 @@ func LoadCubemapTextures(rightTex, leftTex, topTex, botTex, frontTex, backTex st
 		height := int32(nrgbaImg.Bounds().Dy())
 		width := int32(nrgbaImg.Bounds().Dx())
 
-		gl.TexImage2D(uint32(gl.TEXTURE_CUBE_MAP_POSITIVE_X)+i, 0, gl.RGBA8, int32(width), int32(height), 0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&nrgbaImg.Pix[0]))
+		internalFormat := int32(gl.RGBA8)
+		if loadOptions.TextureIsSrgba {
+			internalFormat = gl.SRGB_ALPHA
+		}
+
+		gl.TexImage2D(uint32(gl.TEXTURE_CUBE_MAP_POSITIVE_X)+i, 0, internalFormat, int32(width), int32(height), 0, gl.RGBA, gl.UNSIGNED_BYTE, unsafe.Pointer(&nrgbaImg.Pix[0]))
 	}
 
 	// set the texture wrapping/filtering options (on the currently bound texture object)

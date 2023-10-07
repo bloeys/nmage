@@ -147,7 +147,7 @@ func main() {
 
 	game := &OurGame{
 		Win:       window,
-		ImGUIInfo: nmageimgui.NewImGui(),
+		ImGUIInfo: nmageimgui.NewImGui("./res/shaders/imgui.glsl"),
 	}
 	window.EventCallbacks = append(window.EventCallbacks, game.handleWindowEvents)
 
@@ -231,7 +231,7 @@ func (g *OurGame) Init() {
 	}
 
 	//Load textures
-	tex, err := assets.LoadTexturePNG("./res/textures/pallete-endesga-64-1x.png", nil)
+	tex, err := assets.LoadTexturePNG("./res/textures/pallete-endesga-64-1x.png", &assets.TextureLoadOptions{TextureIsSrgba: true})
 	if err != nil {
 		logging.ErrLog.Fatalln("Failed to load texture. Err: ", err)
 	}
@@ -240,6 +240,7 @@ func (g *OurGame) Init() {
 		"./res/textures/sb-right.jpg", "./res/textures/sb-left.jpg",
 		"./res/textures/sb-top.jpg", "./res/textures/sb-bottom.jpg",
 		"./res/textures/sb-front.jpg", "./res/textures/sb-back.jpg",
+		&assets.TextureLoadOptions{TextureIsSrgba: true},
 	)
 	if err != nil {
 		logging.ErrLog.Fatalln("Failed to load cubemap. Err: ", err)

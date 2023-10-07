@@ -133,17 +133,20 @@ func initSDL() error {
 	sdl.GLSetAttribute(sdl.MAJOR_VERSION, 4)
 	sdl.GLSetAttribute(sdl.MINOR_VERSION, 1)
 
-	// R(0-255) G(0-255) B(0-255)
 	sdl.GLSetAttribute(sdl.GL_RED_SIZE, 8)
 	sdl.GLSetAttribute(sdl.GL_GREEN_SIZE, 8)
 	sdl.GLSetAttribute(sdl.GL_BLUE_SIZE, 8)
+	sdl.GLSetAttribute(sdl.GL_ALPHA_SIZE, 8)
 
 	sdl.GLSetAttribute(sdl.GL_DOUBLEBUFFER, 1)
 	sdl.GLSetAttribute(sdl.GL_DEPTH_SIZE, 24)
 	sdl.GLSetAttribute(sdl.GL_STENCIL_SIZE, 8)
 
-	// Allow us to do MSAA
-	sdl.GLSetAttribute(sdl.GL_MULTISAMPLEBUFFERS, 8)
+	sdl.GLSetAttribute(sdl.GL_FRAMEBUFFER_SRGB_CAPABLE, 1)
+
+	// Allows us to do MSAA
+	sdl.GLSetAttribute(sdl.GL_MULTISAMPLEBUFFERS, 1)
+	sdl.GLSetAttribute(sdl.GL_MULTISAMPLESAMPLES, 4)
 
 	sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_CORE)
 
@@ -155,16 +158,12 @@ func CreateOpenGLWindow(title string, x, y, width, height int32, flags WindowFla
 }
 
 func CreateOpenGLWindowCentered(title string, width, height int32, flags WindowFlags, rend renderer.Render) (*Window, error) {
-	return createWindow(title, -1, -1, width, height, WindowFlags_OPENGL|flags, rend)
+	return createWindow(title, sdl.WINDOWPOS_CENTERED, sdl.WINDOWPOS_CENTERED, width, height, WindowFlags_OPENGL|flags, rend)
 }
 
 func createWindow(title string, x, y, width, height int32, flags WindowFlags, rend renderer.Render) (*Window, error) {
 
-	assert.T(isInited, "engine.Init was not called!")
-	if x == -1 && y == -1 {
-		x = sdl.WINDOWPOS_CENTERED
-		y = sdl.WINDOWPOS_CENTERED
-	}
+	assert.T(isInited, "engine.Init() was not called!")
 
 	sdlWin, err := sdl.CreateWindow(title, x, y, width, height, uint32(flags))
 	if err != nil {
