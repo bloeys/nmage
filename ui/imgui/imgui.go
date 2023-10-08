@@ -16,7 +16,8 @@ type ImguiInfo struct {
 	VaoID      uint32
 	VboID      uint32
 	IndexBufID uint32
-	TexID      uint32
+	// This is a pointer so we can send a stable pointer to C code
+	TexID *uint32
 }
 
 func (i *ImguiInfo) FrameStart(winWidth, winHeight float32) {
@@ -108,11 +109,11 @@ func (i *ImguiInfo) Render(winWidth, winHeight float32, fbWidth, fbHeight int32)
 				cmd.CallUserCallback(list)
 			} else {
 
-				gl.BindTexture(gl.TEXTURE_2D, i.TexID)
+				gl.BindTexture(gl.TEXTURE_2D, *i.TexID)
 				clipRect := cmd.ClipRect()
 				gl.Scissor(int32(clipRect.X), int32(fbHeight)-int32(clipRect.W), int32(clipRect.Z-clipRect.X), int32(clipRect.W-clipRect.Y))
 
-				gl.DrawElementsBaseVertex(gl.TRIANGLES, int32(cmd.ElemCount()), uint32(drawType), gl.PtrOffset(int(cmd.IdxOffset())*indexSize), int32(cmd.VtxOffset()))
+				gl.DrawElementsBaseVertexWithOffset(gl.TRIANGLES, int32(cmd.ElemCount()), uint32(drawType), uintptr(int(cmd.IdxOffset())*indexSize), int32(cmd.VtxOffset()))
 			}
 		}
 	}
@@ -141,7 +142,7 @@ func (i *ImguiInfo) AddFontTTF(fontPath string, fontSize float32, fontConfig *im
 	f := a.AddFontFromFileTTFV(fontPath, fontSize, fontConfigToUse, glyphRangesToUse.Data())
 	pixels, width, height, _ := a.GetTextureDataAsAlpha8()
 
-	gl.BindTexture(gl.TEXTURE_2D, i.TexID)
+	gl.BindTexture(gl.TEXTURE_2D, *i.TexID)
 	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RED, int32(width), int32(height), 0, gl.RED, gl.UNSIGNED_BYTE, pixels)
 
 	return f
@@ -160,10 +161,24 @@ in vec4 Color;
 out vec2 Frag_UV;
 out vec4 Frag_Color;
 
+// Imgui doesn't handle srgb correctly, and looks too bright and wrong in srgb buffers (see: https://github.com/ocornut/imgui/issues/578).
+// While not a complete fix (that would require changes in imgui itself), moving incoming srgba colors to linear in the vertex shader helps make things look better.
+vec4 srgba_to_linear(vec4 srgbaColor){
+
+    #define gamma_correction 2.2
+
+    return vec4(
+        pow(srgbaColor.r, gamma_correction),
+        pow(srgbaColor.g, gamma_correction),
+        pow(srgbaColor.b, gamma_correction),
+        srgbaColor.a
+    );
+}
+
 void main()
 {
     Frag_UV = UV;
-    Frag_Color = Color;
+    Frag_Color = srgba_to_linear(Color);
     gl_Position = ProjMtx * vec4(Position.xy, 0, 1);
 }
 
@@ -197,6 +212,7 @@ func NewImGui(shaderPath string) ImguiInfo {
 	imguiInfo := ImguiInfo{
 		ImCtx: imgui.CreateContext(),
 		Mat:   imguiMat,
+		TexID: new(uint32),
 	}
 
 	io := imgui.CurrentIO()
@@ -206,10 +222,10 @@ func NewImGui(shaderPath string) ImguiInfo {
 	gl.GenVertexArrays(1, &imguiInfo.VaoID)
 	gl.GenBuffers(1, &imguiInfo.VboID)
 	gl.GenBuffers(1, &imguiInfo.IndexBufID)
-	gl.GenTextures(1, &imguiInfo.TexID)
+	gl.GenTextures(1, imguiInfo.TexID)
 
 	// Upload font to gpu
-	gl.BindTexture(gl.TEXTURE_2D, imguiInfo.TexID)
+	gl.BindTexture(gl.TEXTURE_2D, *imguiInfo.TexID)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 	gl.PixelStorei(gl.UNPACK_ROW_LENGTH, 0)
@@ -218,7 +234,7 @@ func NewImGui(shaderPath string) ImguiInfo {
 	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RED, int32(width), int32(height), 0, gl.RED, gl.UNSIGNED_BYTE, pixels)
 
 	// Store our identifier
-	io.Fonts().SetTexID(imgui.TextureID(uintptr(imguiInfo.TexID)))
+	io.Fonts().SetTexID(imgui.TextureID(imguiInfo.TexID))
 
 	//Shader attributes
 	imguiInfo.Mat.Bind()

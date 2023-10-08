@@ -10,10 +10,24 @@ in vec4 Color;
 out vec2 Frag_UV;
 out vec4 Frag_Color;
 
+// Imgui doesn't handle srgb correctly, and looks too bright and wrong in srgb buffers (see: https://github.com/ocornut/imgui/issues/578).
+// While not a complete fix (that would require changes in imgui itself), moving incoming srgba colors to linear in the vertex shader helps make things look better.
+vec4 srgba_to_linear(vec4 srgbaColor){
+
+    #define gamma_correction 2.2
+
+    return vec4(
+        pow(srgbaColor.r, gamma_correction),
+        pow(srgbaColor.g, gamma_correction),
+        pow(srgbaColor.b, gamma_correction),
+        srgbaColor.a
+    );
+}
+
 void main()
 {
     Frag_UV = UV;
-    Frag_Color = Color;
+    Frag_Color = srgba_to_linear(Color);
     gl_Position = ProjMtx * vec4(Position.xy, 0, 1);
 }
 
