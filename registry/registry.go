@@ -77,6 +77,10 @@ func (r *Registry[T]) New() (*T, Handle) {
 
 func (r *Registry[T]) Get(id Handle) *T {
 
+	if id.IsZero() {
+		return nil
+	}
+
 	index := id.Index()
 	assert.T(index < uint64(len(r.Handles)), "Failed to get entity because of invalid entity handle. Handle index is %d while registry only has %d slots. Handle: %+v", index, r.ItemCount, id)
 

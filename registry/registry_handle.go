@@ -16,6 +16,12 @@ const (
 // Byte 1: Generation; Byte 2: Flags; Bytes 3-8: Index
 type Handle uint64
 
+// IsZero reports whether the handle is in its default 'zero' state.
+// A zero handle is an invalid handle that does NOT point to any entity
+func (h Handle) IsZero() bool {
+	return h == 0
+}
+
 func (h Handle) HasFlag(ef HandleFlag) bool {
 	return h.Flags()&ef > 0
 }
