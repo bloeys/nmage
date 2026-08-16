@@ -1,3 +1,5 @@
+
+
 # nMage
 
 [![build](https://github.com/bloeys/nmage/actions/workflows/build-nmage.yml/badge.svg)](https://github.com/bloeys/nmage/actions/workflows/build-nmage.yml)
@@ -15,7 +17,7 @@ This project is being built with the goals being (in no particular order):
 
 To run the project you need:
 
-* A recent version of [Go](https://golang.org/) installed
+* [Go](https://golang.org/) 1.23 or newer installed
 * A C/C++ compiler installed and in your path
   * Windows: [MingW](https://www.mingw-w64.org/downloads/#mingw-builds) or similar
   * Mac/Linux: Should be installed by default, but if not try [GCC](https://gcc.gnu.org/) or [Clang](https://releases.llvm.org/download.html)
